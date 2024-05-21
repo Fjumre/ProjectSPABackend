@@ -36,9 +36,6 @@ public class Event {
     private double Price;
     @Column(name= "status")
     private String Status;
-    //    @Lob // This annotation is used to specify that the column should be treated as a Large Object
-//    @Column(name = "image", columnDefinition = "bytea", nullable = true) // For PostgreSQL, bytea type is used to store binary data
-//    private byte[] image;
     @ManyToMany
     private  Set <User> users = new HashSet<>();
 
