@@ -23,7 +23,7 @@ public class UserDTO {
     private Integer phoneNumber;
 
     private Set<String> roles = new HashSet<>();
-    private Set<String> events = new HashSet<>();
+    private Set<String> toDos = new HashSet<>();
     private String newPassword;
 
 
@@ -94,8 +94,8 @@ public class UserDTO {
     }
 
 
-    public Set<String> getEvents() {
-        return events;
+    public Set<String> getToDos() {
+        return toDos;
     }
 
 

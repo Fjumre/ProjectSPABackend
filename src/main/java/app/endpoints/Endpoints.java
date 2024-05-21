@@ -3,7 +3,7 @@ package app.endpoints;
 import app.config.ApplicationConfig;
 import app.config.HibernateConfig;
 import app.controllers.*;
-import app.dao.DoToDAO;
+import app.dao.ToDoDAO;
 import app.dao.UserDAO;
 import app.security.RouteRoles;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,8 +17,8 @@ public class Endpoints {
     private static ISecurityController securityController = new SecurityController();
 
     static EntityManagerFactory emf = HibernateConfig.getEntityManagerFactory();
-    private static DoToDAO doToDAO = new DoToDAO(emf);
-    private static IEventController eventController= new EventController(doToDAO);
+    private static ToDoDAO toDoDAO = new ToDoDAO(emf);
+    private static IToDoController toDoController= new ToDoController(toDoDAO);
 
     private static UserDAO userDAO= new UserDAO(emf);
     private static IUserController userController= new UserController(userDAO);
@@ -49,8 +49,8 @@ public class Endpoints {
         path("/user", () -> {
             path("/", () -> {
                 before(securityController.authenticate());
-                get("/list", eventController.getAllEvents(), RouteRoles.USER, RouteRoles.ADMIN);
-                get("/list/{date}", eventController.getAllEvents(), RouteRoles.USER, RouteRoles.ADMIN);
+                get("/list", toDoController.getAllToDos(), RouteRoles.USER, RouteRoles.ADMIN);
+                get("/list/{date}", toDoController.getToDoByDate(), RouteRoles.USER, RouteRoles.ADMIN);
                 get("/all", userController.getAllUsers(), RouteRoles.ADMIN);
                 get("/{id}", userController.getUserById(), RouteRoles.ADMIN);
                 post("/create", userController.createUser(), RouteRoles.ADMIN);

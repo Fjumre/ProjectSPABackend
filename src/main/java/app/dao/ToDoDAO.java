@@ -9,24 +9,25 @@ import jakarta.persistence.NoResultException;
 import jakarta.persistence.TypedQuery;
 
 import java.sql.Date;
+import java.time.LocalDate;
 import java.util.List;
 
-public class DoToDAO {
-    private static DoToDAO instance;
+public class ToDoDAO {
+    private static ToDoDAO instance;
     private static EntityManagerFactory emf;
-public DoToDAO(EntityManagerFactory emf) {
+public ToDoDAO(EntityManagerFactory emf) {
         this.emf = emf;
     }
 
-    public static DoToDAO getInstance(EntityManagerFactory emf) {
+    public static ToDoDAO getInstance(EntityManagerFactory emf) {
         if (instance == null) {
-            DoToDAO.emf = emf;
-            instance = new DoToDAO(DoToDAO.emf);
+            ToDoDAO.emf = emf;
+            instance = new ToDoDAO(ToDoDAO.emf);
         }
         return instance;
     }
 
-    public DoToDAO() {
+    public ToDoDAO() {
     }
     // As a user, I want to see all the events/workshops that are going to be held.
 
@@ -35,7 +36,7 @@ public DoToDAO(EntityManagerFactory emf) {
         return em.createQuery("SELECT e FROM ToDo e", ToDo.class).getResultList();
 
     }
-    public List<ToDo> getAllToDosByDate(Date date) {
+    public List<ToDo> getToDosByDate(Date date) {
         EntityManager em = emf.createEntityManager();
         try {
             TypedQuery<ToDo> query = em.createQuery("SELECT e FROM ToDo e WHERE e.Date = :date", ToDo.class);
@@ -45,8 +46,21 @@ public DoToDAO(EntityManagerFactory emf) {
             em.close();
         }
     }
-
-    public ToDo getTodoById(int id) {
+    public List<ToDo> getToDosByDateAndUsername(String username, LocalDate date) {
+        EntityManager em = emf.createEntityManager();
+        try {
+            TypedQuery<ToDo> query = em.createQuery(
+                    "SELECT t FROM ToDo t JOIN t.users u WHERE u.username = :username AND t.date = :date",
+                    ToDo.class
+            );
+            query.setParameter("username", username);
+            query.setParameter("date", date.atStartOfDay());
+            return query.getResultList();
+        } finally {
+            em.close();
+        }
+    }
+    public ToDo getToDoById(int id) {
         EntityManager em = emf.createEntityManager();
         return em.find(ToDo.class, id);
     }
@@ -144,7 +158,7 @@ public DoToDAO(EntityManagerFactory emf) {
         }
     }
 
-    public void addUserToEvent(int userId, int toDoId) {
+    public void addUserToToDo(int userId, int toDoId) {
         EntityManager em = emf.createEntityManager();
         try {
             em.getTransaction().begin();

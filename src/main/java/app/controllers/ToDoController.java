@@ -1,7 +1,7 @@
 package app.controllers;
 
 import app.config.HibernateConfig;
-import app.dao.DoToDAO;
+import app.dao.ToDoDAO;
 import app.dto.ToDoDTO;
 import app.dto.UserDTO;
 import app.model.ToDo;
@@ -12,45 +12,35 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.javalin.http.Handler;
 import io.javalin.http.HttpStatus;
-import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+public class ToDoController implements IToDoController {
+    private final ToDoDAO toDoDAO;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final SecurityController securityController = new SecurityController();
+    private final EntityManagerFactory emf = HibernateConfig.getEntityManagerFactory();
 
-
-public class EventController implements IEventController {
-    DoToDAO doToDAO = new DoToDAO();
-    ObjectMapper objectMapper = new ObjectMapper();
-    SecurityController securityController = new SecurityController();
-
-
-    EntityManagerFactory emf = HibernateConfig.getEntityManagerFactory();
-    EntityManager em = emf.createEntityManager();
-
-    public EventController(DoToDAO doToDAO) {
-        this.doToDAO = doToDAO;
+    public ToDoController(ToDoDAO toDoDAO) {
+        this.toDoDAO = toDoDAO;
     }
-
 
     private List<UserDTO> convertToUserDTO(List<User> users) {
         return users.stream()
                 .map(UserDTO::new)
                 .collect(Collectors.toList());
     }
-//    private UserDTO convertToUserDTO(User user) {
-//        return new UserDTO(user);
-//    }
 
     private ToDo convertToEntity(ToDoDTO toDoDTO) {
-
         return new ToDo(toDoDTO);
     }
 
-    public Handler getAllEvents() {
-        return (ctx) -> {
+    public Handler getAllToDos() {
+        return ctx -> {
             ObjectNode returnObject = objectMapper.createObjectNode();
 
             // Check for authentication
@@ -59,6 +49,7 @@ public class EventController implements IEventController {
                 ctx.status(HttpStatus.UNAUTHORIZED).json(returnObject.put("msg", "Unauthorized"));
                 return;
             }
+
             // Remove the "Bearer " prefix to get the actual token
             authToken = authToken.substring(7);
 
@@ -75,7 +66,7 @@ public class EventController implements IEventController {
             }
 
             try {
-                List<ToDo> toDos = doToDAO.getAllToDos();
+                List<ToDo> toDos = toDoDAO.getAllToDos();
                 List<ToDoDTO> toDoDTOS = toDos.stream().map(ToDoDTO::new).collect(Collectors.toList());
                 ctx.json(toDoDTOS);
             } catch (Exception e) {
@@ -84,199 +75,200 @@ public class EventController implements IEventController {
         };
     }
 
-
-
-    @Override
-    public Handler getEventById() {
-        return (ctx) -> {
+    public Handler getToDoByDate() {
+        return ctx -> {
             ObjectNode returnObject = objectMapper.createObjectNode();
+            String authToken = ctx.header("Authorization");
+            if (authToken == null || !authToken.startsWith("Bearer ")) {
+                ctx.status(HttpStatus.UNAUTHORIZED).json(returnObject.put("msg", "Unauthorized"));
+                return;
+            }
+
+            authToken = authToken.substring(7);
+
+            UserDTO user;
             try {
-                int id = Integer.parseInt(ctx.pathParam("id"));
-                ToDo toDo = doToDAO.getTodoById(id);
-                ToDoDTO toDoDTO = new ToDoDTO(toDo);
-                ctx.json(toDoDTO);
+                user = securityController.verifyToken(authToken);
+                if (user == null) {
+                    ctx.status(HttpStatus.UNAUTHORIZED).json(returnObject.put("msg", "Unauthorized"));
+                    return;
+                }
             } catch (Exception e) {
-                ctx.status(500);
-                ctx.json(returnObject.put("msg", "Internal server error"));
+                ctx.status(HttpStatus.UNAUTHORIZED).json(returnObject.put("msg", "Unauthorized: " + e.getMessage()));
+                return;
+            }
+
+            try {
+                LocalDate date = LocalDate.parse(ctx.pathParam("date"));
+                List<ToDo> toDos = toDoDAO.getToDosByDateAndUsername(user.getUsername(), date);
+                List<ToDoDTO> toDoDTOS = toDos.stream().map(ToDoDTO::new).collect(Collectors.toList());
+                ctx.json(toDoDTOS);
+            } catch (Exception e) {
+                ctx.status(HttpStatus.INTERNAL_SERVER_ERROR).json(returnObject.put("msg", "Internal server error: " + e.getMessage()));
             }
         };
     }
 
     @Override
-    public Handler createEvent() {
-        return (ctx) -> {
+    public Handler getToDoById() {
+        return ctx -> {
             ObjectNode returnObject = objectMapper.createObjectNode();
             try {
-                // Parse the incoming JSON to an ToDoDTO
-                ToDoDTO eventInput = ctx.bodyAsClass(ToDoDTO.class);
+                int id = Integer.parseInt(ctx.pathParam("id"));
+                ToDo toDo = toDoDAO.getToDoById(id);
+                ToDoDTO toDoDTO = new ToDoDTO(toDo);
+                ctx.json(toDoDTO);
+            } catch (Exception e) {
+                ctx.status(500).json(returnObject.put("msg", "Internal server error"));
+            }
+        };
+    }
+
+    @Override
+    public Handler createToDo() {
+        return ctx -> {
+            ObjectNode returnObject = objectMapper.createObjectNode();
+            try {
+                // Parse the incoming JSON to a ToDoDTO
+                ToDoDTO toDoInput = ctx.bodyAsClass(ToDoDTO.class);
 
                 // Convert ToDoDTO to ToDo entity
-                ToDo toDoToCreate = convertToEntity(eventInput);
+                ToDo toDoToCreate = convertToEntity(toDoInput);
 
-                // Create the event in the database
-                ToDo createdToDo = doToDAO.create(toDoToCreate);
+                // Create the to-do in the database
+                ToDo createdToDo = toDoDAO.create(toDoToCreate);
 
                 // Convert the created ToDo back to ToDoDTO for response
                 ToDoDTO createdToDoDTO = new ToDoDTO(createdToDo);
 
-
-                // Set status as CREATED and return the created event
+                // Set status as CREATED and return the created to-do
                 ctx.status(HttpStatus.CREATED).json(createdToDoDTO);
             } catch (Exception e) {
-
-                e.printStackTrace();
                 ctx.status(500).json(returnObject.put("msg", "Internal server error: " + e.getMessage()));
             }
         };
     }
 
-
     @Override
-    public Handler updateEvent() {
+    public Handler updateToDo() {
         return ctx -> {
             ObjectNode returnObject = objectMapper.createObjectNode();
             try {
-                // Parse the incoming JSON to an ToDoDTO
-                ToDoDTO eventInput = ctx.bodyAsClass(ToDoDTO.class);
+                // Parse the incoming JSON to a ToDoDTO
+                ToDoDTO toDoInput = ctx.bodyAsClass(ToDoDTO.class);
 
-                // Retrieve the event to be updated
+                // Retrieve the to-do to be updated
                 int id = Integer.parseInt(ctx.pathParam("id"));
-                ToDo toDoToUpdate = doToDAO.getTodoById(id);
+                ToDo toDoToUpdate = toDoDAO.getToDoById(id);
 
-                // Check if event exists
+                // Check if to-do exists
                 if (toDoToUpdate == null) {
                     ctx.status(404).json(returnObject.put("msg", "ToDo not found"));
                     return;
                 }
 
-                // Update the event entity with new values from ToDoDTO
-                updateEventEntityWithDTO(toDoToUpdate, eventInput);
+                // Update the to-do entity with new values from ToDoDTO
+                updateToDoEntityWithDTO(toDoToUpdate, toDoInput);
 
-                // Update the event in the database
-                ToDo updatedToDo = doToDAO.update(toDoToUpdate);
+                // Update the to-do in the database
+                ToDo updatedToDo = toDoDAO.update(toDoToUpdate);
 
-                // Respond with the updated event ID
-                ctx.json(returnObject.put("updatedEventId", updatedToDo.getToDoId()));
-
+                // Respond with the updated to-do ID
+                ctx.json(returnObject.put("updatedToDoId", updatedToDo.getToDoId()));
             } catch (NumberFormatException e) {
-                ctx.status(400).json(returnObject.put("msg", "Invalid format for event ID"));
+                ctx.status(400).json(returnObject.put("msg", "Invalid format for to-do ID"));
             } catch (Exception e) {
                 ctx.status(500).json(returnObject.put("msg", "Internal server error: " + e.getMessage()));
             }
         };
     }
 
-    private void updateEventEntityWithDTO(ToDo toDo, ToDoDTO dto) {
+    private void updateToDoEntityWithDTO(ToDo toDo, ToDoDTO dto) {
         toDo.setTitle(dto.getTitle());
         toDo.setDate(dto.getDate().atStartOfDay());
         toDo.setCapacity(dto.getCapacity());
         toDo.setPrice(dto.getPrice());
         toDo.setStatus(dto.getStatus());
-
     }
 
-
     @Override
-    public Handler deleteEvent() {
-        return (ctx) -> {
+    public Handler deleteToDo() {
+        return ctx -> {
             ObjectNode returnObject = objectMapper.createObjectNode();
             try {
                 int id = Integer.parseInt(ctx.pathParam("id"));
-                doToDAO.delete(id);
+                toDoDAO.delete(id);
                 ctx.status(204);
             } catch (Exception e) {
-                ctx.status(500);
-                ctx.json(returnObject.put("msg", "Internal server error"));
+                ctx.status(500).json(returnObject.put("msg", "Internal server error"));
             }
         };
     }
 
     @Override
-    public Handler getAllRegistrationsForEvent() {
+    public Handler getAllRegistrationsForToDo() {
         return ctx -> {
             try {
-                int eventId = Integer.parseInt(ctx.pathParam("event_id"));
-                List<User> registrations = doToDAO.getRegistrationsForToDoById(eventId);
+                int toDoId = Integer.parseInt(ctx.pathParam("todo_id"));
+                List<User> registrations = toDoDAO.getRegistrationsForToDoById(toDoId);
                 List<UserDTO> registrationDTOs = convertToUserDTO(registrations);
                 ctx.json(registrationDTOs);
             } catch (NumberFormatException e) {
-                ctx.status(400).json(Map.of("msg", "Invalid event ID format"));
+                ctx.status(400).json(Map.of("msg", "Invalid to-do ID format"));
             } catch (Exception e) {
                 ctx.status(500).json(Map.of("msg", "Internal server error"));
-                e.printStackTrace();
             }
         };
     }
-
 
     @Override
     public Handler getRegistrationById() {
-        return (ctx) -> {
+        return ctx -> {
             ObjectNode returnObject = objectMapper.createObjectNode();
             try {
-                int id = Integer.parseInt(ctx.pathParam("event_id"));
-                ctx.json("There are " + doToDAO.getRegistrationsCountById(id) + " users registered");
+                int id = Integer.parseInt(ctx.pathParam("todo_id"));
+                ctx.json("There are " + toDoDAO.getRegistrationsCountById(id) + " users registered");
             } catch (Exception e) {
-                ctx.status(500);
-                System.out.println(e);
-                ctx.json(returnObject.put("msg", "Internal server error"));
+                ctx.status(500).json(returnObject.put("msg", "Internal server error"));
             }
         };
     }
 
-
     @Override
-    public Handler registerUserForEvent() {
+    public Handler registerUserForToDo() {
         return ctx -> {
-
-
-            int eventId = Integer.parseInt(ctx.pathParam("event_id"));
+            int toDoId = Integer.parseInt(ctx.pathParam("todo_id"));
             JsonObject requestBody = JsonParser.parseString(ctx.body()).getAsJsonObject();
-
             int userId = requestBody.get("id").getAsInt();
-
-            doToDAO.addUserToEvent(userId, eventId);
-
-            ctx.status(200).result("User registered for the event successfully");
+            toDoDAO.addUserToToDo(userId, toDoId);
+            ctx.status(200).result("User registered for the to-do successfully");
         };
     }
 
     @Override
-    public Handler removeUserFromEvent() {
+    public Handler removeUserFromToDo() {
         return ctx -> {
-            int eventId = Integer.parseInt(ctx.pathParam("event_id"));
+            int toDoId = Integer.parseInt(ctx.pathParam("todo_id"));
             JsonObject requestBody = JsonParser.parseString(ctx.body()).getAsJsonObject();
-
             int userId = requestBody.get("id").getAsInt();
-
-            doToDAO.removeUserEvent(userId, eventId);
-
-            ctx.status(200).result("User removed for the event successfully");
+            toDoDAO.removeUserToDo(userId, toDoId);
+            ctx.status(200).result("User removed from the to-do successfully");
         };
-
-
     }
 
-
     @Override
-    public Handler getAllEventsByStatus() {
-        return (ctx) -> {
+    public Handler getAllToDosByStatus() {
+        return ctx -> {
             ObjectNode returnObject = objectMapper.createObjectNode();
             try {
                 String status = ctx.pathParam("status");
-                List<ToDo> toDos = doToDAO.getToDoByStatus(status);
-
-                List<ToDoDTO> toDoDTOS = toDos.stream()
-                        .map(ToDoDTO::new)
-                        .collect(Collectors.toList());
-
+                List<ToDo> toDos = toDoDAO.getToDoByStatus(status);
+                List<ToDoDTO> toDoDTOS = toDos.stream().map(ToDoDTO::new).collect(Collectors.toList());
                 ctx.json(toDoDTOS);
             } catch (NumberFormatException e) {
-                ctx.status(400).json(returnObject.put("msg", "Invalid category ID format"));
+                ctx.status(400).json(returnObject.put("msg", "Invalid status format"));
             } catch (Exception e) {
-                ctx.status(500);
-                System.out.println(e);
-                ctx.json(returnObject.put("msg", "Internal server error"));
+                ctx.status(500).json(returnObject.put("msg", "Internal server error"));
             }
         };
     }
