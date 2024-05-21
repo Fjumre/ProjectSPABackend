@@ -38,10 +38,10 @@ public class User {
     private Set<Role> roles = new HashSet<>();
 
     @ManyToMany
-    @JoinTable(name = "user_events",
+    @JoinTable(name = "user_todos",
             joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "event_id", referencedColumnName = "event_id"))
-    private Set<Event> events = new HashSet<>();
+            inverseJoinColumns = @JoinColumn(name = "todo_id", referencedColumnName = "todoid"))
+    private Set<ToDo> toDos = new HashSet<>();
 
 
     public User(String username, String password) {
@@ -67,9 +67,9 @@ public class User {
         this.password = BCrypt.hashpw(password, salt);
     }
 
-    public User(String username, Set<Event> events) {
+    public User(String username, Set<ToDo> toDos) {
         this.username = username;
-        this.events = events;
+        this.toDos = toDos;
     }
 
     public boolean verifyUser(String password) {
@@ -77,13 +77,13 @@ public class User {
     }
 
 
-    public User(String username, String password, String email, int phoneNumber, Set<Role> roles, Set<Event> events) {
+    public User(String username, String password, String email, int phoneNumber, Set<Role> roles, Set<ToDo> toDos) {
         this.username = username;
         this.password = password;
         this.email = email;
         this.phoneNumber = phoneNumber;
         this.roles = roles;
-        this.events = events;
+        this.toDos = toDos;
     }
 
     public void addRole(Role role) {
@@ -94,13 +94,13 @@ public class User {
         roles.remove(role);
         role.getUsers().remove(this);
     }
-    public void addEvent(Event event) {
-        events.add(event);
-        event.getUsers().add(this);
+    public void addToDo(ToDo toDo) {
+        toDos.add(toDo);
+        toDo.getUsers().add(this);
     }
-    public void removeEvent(Event event) {
-        events.remove(event);
-        event.getUsers().remove(this);
+    public void removeToDo(ToDo toDo) {
+        toDos.remove(toDo);
+        toDo.getUsers().remove(this);
     }
 
 
@@ -116,11 +116,11 @@ public class User {
     }
 
     public Set<String> getEventsAsStrings() {
-        if (events.isEmpty()) {
+        if (toDos.isEmpty()) {
             return null;
         }
         Set<String> eventsAsStrings = new HashSet<>();
-        events.forEach((event) -> {
+        toDos.forEach((event) -> {
             eventsAsStrings.add(event.getTitle());
         });
         return eventsAsStrings;

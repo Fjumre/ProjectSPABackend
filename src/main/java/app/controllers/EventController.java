@@ -1,10 +1,10 @@
 package app.controllers;
 
 import app.config.HibernateConfig;
-import app.dao.EventDAO;
-import app.dto.EventDTO;
+import app.dao.DoToDAO;
+import app.dto.ToDoDTO;
 import app.dto.UserDTO;
-import app.model.Event;
+import app.model.ToDo;
 import app.model.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 
 
 public class EventController implements IEventController {
-    EventDAO eventDAO = new EventDAO();
+    DoToDAO doToDAO = new DoToDAO();
     ObjectMapper objectMapper = new ObjectMapper();
     SecurityController securityController = new SecurityController();
 
@@ -30,8 +30,8 @@ public class EventController implements IEventController {
     EntityManagerFactory emf = HibernateConfig.getEntityManagerFactory();
     EntityManager em = emf.createEntityManager();
 
-    public EventController(EventDAO eventDAO) {
-        this.eventDAO = eventDAO;
+    public EventController(DoToDAO doToDAO) {
+        this.doToDAO = doToDAO;
     }
 
 
@@ -44,9 +44,9 @@ public class EventController implements IEventController {
 //        return new UserDTO(user);
 //    }
 
-    private Event convertToEntity(EventDTO eventDTO) {
+    private ToDo convertToEntity(ToDoDTO toDoDTO) {
 
-        return new Event(eventDTO);
+        return new ToDo(toDoDTO);
     }
 
     public Handler getAllEvents() {
@@ -75,9 +75,9 @@ public class EventController implements IEventController {
             }
 
             try {
-                List<Event> events = eventDAO.getAllEvents();
-                List<EventDTO> eventDTOS = events.stream().map(EventDTO::new).collect(Collectors.toList());
-                ctx.json(eventDTOS);
+                List<ToDo> toDos = doToDAO.getAllToDos();
+                List<ToDoDTO> toDoDTOS = toDos.stream().map(ToDoDTO::new).collect(Collectors.toList());
+                ctx.json(toDoDTOS);
             } catch (Exception e) {
                 ctx.status(HttpStatus.INTERNAL_SERVER_ERROR).json(returnObject.put("msg", "Internal server error: " + e.getMessage()));
             }
@@ -92,9 +92,9 @@ public class EventController implements IEventController {
             ObjectNode returnObject = objectMapper.createObjectNode();
             try {
                 int id = Integer.parseInt(ctx.pathParam("id"));
-                Event event = eventDAO.getEventById(id);
-                EventDTO eventDTO = new EventDTO(event);
-                ctx.json(eventDTO);
+                ToDo toDo = doToDAO.getTodoById(id);
+                ToDoDTO toDoDTO = new ToDoDTO(toDo);
+                ctx.json(toDoDTO);
             } catch (Exception e) {
                 ctx.status(500);
                 ctx.json(returnObject.put("msg", "Internal server error"));
@@ -107,21 +107,21 @@ public class EventController implements IEventController {
         return (ctx) -> {
             ObjectNode returnObject = objectMapper.createObjectNode();
             try {
-                // Parse the incoming JSON to an EventDTO
-                EventDTO eventInput = ctx.bodyAsClass(EventDTO.class);
+                // Parse the incoming JSON to an ToDoDTO
+                ToDoDTO eventInput = ctx.bodyAsClass(ToDoDTO.class);
 
-                // Convert EventDTO to Event entity
-                Event eventToCreate = convertToEntity(eventInput);
+                // Convert ToDoDTO to ToDo entity
+                ToDo toDoToCreate = convertToEntity(eventInput);
 
                 // Create the event in the database
-                Event createdEvent = eventDAO.create(eventToCreate);
+                ToDo createdToDo = doToDAO.create(toDoToCreate);
 
-                // Convert the created Event back to EventDTO for response
-                EventDTO createdEventDTO = new EventDTO(createdEvent);
+                // Convert the created ToDo back to ToDoDTO for response
+                ToDoDTO createdToDoDTO = new ToDoDTO(createdToDo);
 
 
                 // Set status as CREATED and return the created event
-                ctx.status(HttpStatus.CREATED).json(createdEventDTO);
+                ctx.status(HttpStatus.CREATED).json(createdToDoDTO);
             } catch (Exception e) {
 
                 e.printStackTrace();
@@ -136,27 +136,27 @@ public class EventController implements IEventController {
         return ctx -> {
             ObjectNode returnObject = objectMapper.createObjectNode();
             try {
-                // Parse the incoming JSON to an EventDTO
-                EventDTO eventInput = ctx.bodyAsClass(EventDTO.class);
+                // Parse the incoming JSON to an ToDoDTO
+                ToDoDTO eventInput = ctx.bodyAsClass(ToDoDTO.class);
 
                 // Retrieve the event to be updated
                 int id = Integer.parseInt(ctx.pathParam("id"));
-                Event eventToUpdate = eventDAO.getEventById(id);
+                ToDo toDoToUpdate = doToDAO.getTodoById(id);
 
                 // Check if event exists
-                if (eventToUpdate == null) {
-                    ctx.status(404).json(returnObject.put("msg", "Event not found"));
+                if (toDoToUpdate == null) {
+                    ctx.status(404).json(returnObject.put("msg", "ToDo not found"));
                     return;
                 }
 
-                // Update the event entity with new values from EventDTO
-                updateEventEntityWithDTO(eventToUpdate, eventInput);
+                // Update the event entity with new values from ToDoDTO
+                updateEventEntityWithDTO(toDoToUpdate, eventInput);
 
                 // Update the event in the database
-                Event updatedEvent = eventDAO.update(eventToUpdate);
+                ToDo updatedToDo = doToDAO.update(toDoToUpdate);
 
                 // Respond with the updated event ID
-                ctx.json(returnObject.put("updatedEventId", updatedEvent.getEventId()));
+                ctx.json(returnObject.put("updatedEventId", updatedToDo.getToDoId()));
 
             } catch (NumberFormatException e) {
                 ctx.status(400).json(returnObject.put("msg", "Invalid format for event ID"));
@@ -166,12 +166,12 @@ public class EventController implements IEventController {
         };
     }
 
-    private void updateEventEntityWithDTO(Event event, EventDTO dto) {
-        event.setTitle(dto.getTitle());
-        event.setDate(dto.getDate().atStartOfDay());
-        event.setCapacity(dto.getCapacity());
-        event.setPrice(dto.getPrice());
-        event.setStatus(dto.getStatus());
+    private void updateEventEntityWithDTO(ToDo toDo, ToDoDTO dto) {
+        toDo.setTitle(dto.getTitle());
+        toDo.setDate(dto.getDate().atStartOfDay());
+        toDo.setCapacity(dto.getCapacity());
+        toDo.setPrice(dto.getPrice());
+        toDo.setStatus(dto.getStatus());
 
     }
 
@@ -182,7 +182,7 @@ public class EventController implements IEventController {
             ObjectNode returnObject = objectMapper.createObjectNode();
             try {
                 int id = Integer.parseInt(ctx.pathParam("id"));
-                eventDAO.delete(id);
+                doToDAO.delete(id);
                 ctx.status(204);
             } catch (Exception e) {
                 ctx.status(500);
@@ -196,7 +196,7 @@ public class EventController implements IEventController {
         return ctx -> {
             try {
                 int eventId = Integer.parseInt(ctx.pathParam("event_id"));
-                List<User> registrations = eventDAO.getRegistrationsForEventById(eventId);
+                List<User> registrations = doToDAO.getRegistrationsForToDoById(eventId);
                 List<UserDTO> registrationDTOs = convertToUserDTO(registrations);
                 ctx.json(registrationDTOs);
             } catch (NumberFormatException e) {
@@ -215,7 +215,7 @@ public class EventController implements IEventController {
             ObjectNode returnObject = objectMapper.createObjectNode();
             try {
                 int id = Integer.parseInt(ctx.pathParam("event_id"));
-                ctx.json("There are " + eventDAO.getRegistrationsCountById(id) + " users registered");
+                ctx.json("There are " + doToDAO.getRegistrationsCountById(id) + " users registered");
             } catch (Exception e) {
                 ctx.status(500);
                 System.out.println(e);
@@ -235,7 +235,7 @@ public class EventController implements IEventController {
 
             int userId = requestBody.get("id").getAsInt();
 
-            eventDAO.addUserToEvent(userId, eventId);
+            doToDAO.addUserToEvent(userId, eventId);
 
             ctx.status(200).result("User registered for the event successfully");
         };
@@ -249,7 +249,7 @@ public class EventController implements IEventController {
 
             int userId = requestBody.get("id").getAsInt();
 
-            eventDAO.removeUserEvent(userId, eventId);
+            doToDAO.removeUserEvent(userId, eventId);
 
             ctx.status(200).result("User removed for the event successfully");
         };
@@ -264,13 +264,13 @@ public class EventController implements IEventController {
             ObjectNode returnObject = objectMapper.createObjectNode();
             try {
                 String status = ctx.pathParam("status");
-                List<Event> events = eventDAO.getEventByStatus(status);
+                List<ToDo> toDos = doToDAO.getToDoByStatus(status);
 
-                List<EventDTO> eventDTOS = events.stream()
-                        .map(EventDTO::new)
+                List<ToDoDTO> toDoDTOS = toDos.stream()
+                        .map(ToDoDTO::new)
                         .collect(Collectors.toList());
 
-                ctx.json(eventDTOS);
+                ctx.json(toDoDTOS);
             } catch (NumberFormatException e) {
                 ctx.status(400).json(returnObject.put("msg", "Invalid category ID format"));
             } catch (Exception e) {

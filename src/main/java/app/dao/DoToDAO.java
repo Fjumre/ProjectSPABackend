@@ -1,51 +1,62 @@
 package app.dao;
 
 
-import app.model.Event;
+import app.model.ToDo;
 import app.model.User;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.TypedQuery;
 
+import java.sql.Date;
 import java.util.List;
 
-public class EventDAO {
-    private static EventDAO instance;
+public class DoToDAO {
+    private static DoToDAO instance;
     private static EntityManagerFactory emf;
-public EventDAO(EntityManagerFactory emf) {
+public DoToDAO(EntityManagerFactory emf) {
         this.emf = emf;
     }
 
-    public static EventDAO getInstance(EntityManagerFactory emf) {
+    public static DoToDAO getInstance(EntityManagerFactory emf) {
         if (instance == null) {
-            EventDAO.emf = emf;
-            instance = new EventDAO(EventDAO.emf);
+            DoToDAO.emf = emf;
+            instance = new DoToDAO(DoToDAO.emf);
         }
         return instance;
     }
 
-    public EventDAO() {
+    public DoToDAO() {
     }
     // As a user, I want to see all the events/workshops that are going to be held.
 
-    public List<Event> getAllEvents() {
+    public List<ToDo> getAllToDos() {
         EntityManager em = emf.createEntityManager();
-        return em.createQuery("SELECT e FROM Event e", Event.class).getResultList();
+        return em.createQuery("SELECT e FROM ToDo e", ToDo.class).getResultList();
 
     }
-
-    public Event getEventById(int id) {
-        EntityManager em = emf.createEntityManager();
-        return em.find(Event.class, id);
-    }
-
-
-    public List<Event> getEventByStatus(String status) {
+    public List<ToDo> getAllToDosByDate(Date date) {
         EntityManager em = emf.createEntityManager();
         try {
-            String jpql = "SELECT e FROM Event e WHERE e.Status = :status";
-            TypedQuery<Event> query = em.createQuery(jpql, Event.class);
+            TypedQuery<ToDo> query = em.createQuery("SELECT e FROM ToDo e WHERE e.Date = :date", ToDo.class);
+            query.setParameter("date", date);
+            return query.getResultList();
+        } finally {
+            em.close();
+        }
+    }
+
+    public ToDo getTodoById(int id) {
+        EntityManager em = emf.createEntityManager();
+        return em.find(ToDo.class, id);
+    }
+
+
+    public List<ToDo> getToDoByStatus(String status) {
+        EntityManager em = emf.createEntityManager();
+        try {
+            String jpql = "SELECT e FROM ToDo e WHERE e.Status = :status";
+            TypedQuery<ToDo> query = em.createQuery(jpql, ToDo.class);
             query.setParameter("status", status);
             return query.getResultList();
         } finally {
@@ -53,61 +64,61 @@ public EventDAO(EntityManagerFactory emf) {
         }
     }
 
-    public Event create(Event event) {
+    public ToDo create(ToDo toDo) {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
-        em.persist(event);
+        em.persist(toDo);
         em.getTransaction().commit();
-        return event;
+        return toDo;
     }
-    public Event read(int id) {
+    public ToDo read(int id) {
         EntityManager em = emf.createEntityManager();
-        return em.find(Event.class, id);
+        return em.find(ToDo.class, id);
     }
 
 
-    public Event update(Event event) {
+    public ToDo update(ToDo toDo) {
 
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
-        em.merge(event);
+        em.merge(toDo);
         em.getTransaction().commit();
-        return event;
+        return toDo;
     }
 
 
     public void delete(int id) {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
-        Event event = em.find(Event.class, id);
-        em.remove(event);
+        ToDo toDo = em.find(ToDo.class, id);
+        em.remove(toDo);
         em.getTransaction().commit();
     }
 
-    public void addUserToEvent(User user, Event createdEvent) {
+    public void addToDoToUser(ToDo toDo, User userAdd) {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
-        Event event = em.find(Event.class, createdEvent.getEventId());
-        event.addUser(user);
+        User user= em.find(User.class, userAdd.getId());
+        user.addToDo(toDo);
         em.getTransaction().commit();
     }
 
-    public void removeUserFromEvent(User user, Event createdEvent) {
+    public void removeToDOFromUser(ToDo toDo, User userRemove) {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
-        Event event = em.find(Event.class, createdEvent.getEventId());
-        event.removeUser(user);
+        User user= em.find(User.class, userRemove.getId());
+        user.removeToDo(toDo);
         em.getTransaction().commit();
     }
 
 
-    public List<User> getRegistrationsForEventById(int eventId) {
+    public List<User> getRegistrationsForToDoById(int toDoId) {
         EntityManager em = emf.createEntityManager();
         try {
 
-            String jpql = "SELECT DISTINCT u FROM User u JOIN FETCH u.roles JOIN FETCH u.events e WHERE e.EventId = :eventId";
+            String jpql = "SELECT DISTINCT u FROM User u JOIN FETCH u.roles JOIN FETCH u.toDos e WHERE e.ToDoId = :toDoId";
             List<User> users = em.createQuery(jpql, User.class)
-                    .setParameter("eventId", eventId)
+                    .setParameter("toDoId", toDoId)
                     .getResultList();
             return users;
         } finally {
@@ -120,7 +131,7 @@ public EventDAO(EntityManagerFactory emf) {
         try {
             TypedQuery<Long> query = em.createQuery("SELECT COUNT(u) " +
                     "FROM User u " +
-                    "JOIN u.events e " +
+                    "JOIN u.toDos e " +
                     "WHERE e.id = :id", Long.class);
             query.setParameter("id", id);
             Long count = query.getSingleResult();
@@ -133,24 +144,24 @@ public EventDAO(EntityManagerFactory emf) {
         }
     }
 
-    public void addUserToEvent(int userId, int eventId) {
+    public void addUserToEvent(int userId, int toDoId) {
         EntityManager em = emf.createEntityManager();
         try {
             em.getTransaction().begin();
 
             User user = em.find(User.class, userId);
-            Event event = em.find(Event.class, eventId);
+            ToDo toDo = em.find(ToDo.class, toDoId);
 
-            if (user != null && event != null) {
-                // Add the user to the event
-                event.getUsers().add(user);
+            if (user != null && toDo != null) {
+                // Add the user to the toDo
+                toDo.getUsers().add(user);
 
                 // Also update the user's side of the relationship if it's bidirectional
-                user.getEvents().add(event);
+                user.getToDos().add(toDo);
                 em.merge(user);
-                em.merge(event);
+                em.merge(toDo);
             } else {
-                System.out.println("User or event not found");
+                System.out.println("User or toDo not found");
             }
 
             em.getTransaction().commit();
@@ -166,23 +177,23 @@ public EventDAO(EntityManagerFactory emf) {
 
 
 
-    public void removeUserEvent(int userId, int eventId) {
+    public void removeUserToDo(int userId, int toDoId) {
         EntityManager em = emf.createEntityManager();
         try {
             em.getTransaction().begin();
 
             User user = em.find(User.class, userId);
-            Event event = em.find(Event.class, eventId);
+            ToDo toDo = em.find(ToDo.class, toDoId);
 
-            if (user != null && event != null) {
+            if (user != null && toDo != null) {
 
-                event.getUsers().remove(user);
-                user.getEvents().remove(event);
+                toDo.getUsers().remove(user);
+                user.getToDos().remove(toDo);
 
                 em.merge(user);
-                em.merge(event);
+                em.merge(toDo);
             } else {
-                System.out.println("User or event not found");
+                System.out.println("User or toDo not found");
             }
 
             em.getTransaction().commit();

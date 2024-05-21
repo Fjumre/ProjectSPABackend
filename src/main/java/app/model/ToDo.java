@@ -1,15 +1,13 @@
 package app.model;
 
-import app.dto.EventDTO;
+import app.dto.ToDoDTO;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -18,14 +16,14 @@ import java.util.Set;
 @NoArgsConstructor
 @Table(name = "event")
 @Entity
-@NamedQuery(name = "Event.findAll", query = "SELECT e FROM Event e")
+@NamedQuery(name = "Event.findAll", query = "SELECT e FROM ToDo e")
 
-public class Event {
+public class ToDo {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name= "event_id", nullable = false, unique = true)
-    private int EventId;
+    @Column(name= "todoid", nullable = false, unique = true)
+    private int ToDoId;
     @Column(name= "title")
     private String Title;
     @Column(name= "date")
@@ -39,8 +37,8 @@ public class Event {
     @ManyToMany
     private  Set <User> users = new HashSet<>();
 
-    public Event(int eventId, String title, LocalDateTime date, int capacity, double price, String status, Set<User> users) {
-        EventId = eventId;
+    public ToDo(int toDoId, String title, LocalDateTime date, int capacity, double price, String status, Set<User> users) {
+        ToDoId = toDoId;
         Title = title;
         Date = date;
         Capacity = capacity;
@@ -51,19 +49,19 @@ public class Event {
 
     public void addUser(User user) {
         users.add(user);
-        user.getEvents().add(this);
+        user.getToDos().add(this);
     }
     public void removeUser(User user) {
         users.remove(user);
-        user.getEvents().remove(this);
+        user.getToDos().remove(this);
     }
 
-    public Event(EventDTO eventDTO) {
-        this.EventId = eventDTO.getEventId();
-        this.Title = eventDTO.getTitle();
-        this.Date = LocalDate.from(eventDTO.getDate()).atStartOfDay();
-        this.Capacity = eventDTO.getCapacity();
-        this.Price = eventDTO.getPrice();
-        this.Status = eventDTO.getStatus();
+    public ToDo(ToDoDTO toDoDTO) {
+        this.ToDoId = toDoDTO.getToDoId();
+        this.Title = toDoDTO.getTitle();
+        this.Date = LocalDate.from(toDoDTO.getDate()).atStartOfDay();
+        this.Capacity = toDoDTO.getCapacity();
+        this.Price = toDoDTO.getPrice();
+        this.Status = toDoDTO.getStatus();
     }
 }

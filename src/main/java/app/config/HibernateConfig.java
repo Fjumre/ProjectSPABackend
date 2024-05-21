@@ -1,7 +1,7 @@
 package app.config;
 
 
-import app.model.Event;
+import app.model.ToDo;
 import app.model.Role;
 import app.model.User;
 import app.utils.Utils;
@@ -67,7 +67,7 @@ public class HibernateConfig {
     private static void getAnnotationConfiguration(Configuration configuration) {
         configuration.addAnnotatedClass(User.class);
         configuration.addAnnotatedClass(Role.class);
-        configuration.addAnnotatedClass(Event.class);
+        configuration.addAnnotatedClass(ToDo.class);
 
     }
 

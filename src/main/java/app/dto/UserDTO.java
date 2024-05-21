@@ -58,7 +58,7 @@ public class UserDTO {
 //        if (user.getRoles() != null) {
 //            this.roles = user.getRolesAsStrings();
 //        }
-//        if (user.getEvents() != null) {
+//        if (user.getToDos() != null) {
 //            this.events = user.getEventsAsStrings();
 //        }
 //    }

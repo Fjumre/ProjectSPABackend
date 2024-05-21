@@ -1,7 +1,7 @@
 package app.dto;
 
 
-import app.model.Event;
+import app.model.ToDo;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,8 +14,8 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @Setter
 @ToString
-public class EventDTO {
-    private int EventId;
+public class ToDoDTO {
+    private int ToDoId;
     private String Title;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate Date;
@@ -23,8 +23,8 @@ public class EventDTO {
     private double Price;
     private String Status;
 
-    public EventDTO(int eventId, String title, LocalDate date, int capacity, double price, String status) {
-        EventId = eventId;
+    public ToDoDTO(int toDoId, String title, LocalDate date, int capacity, double price, String status) {
+        ToDoId = toDoId;
         Title = title;
         Date = date;
         Capacity = capacity;
@@ -32,7 +32,7 @@ public class EventDTO {
         Status = status;
     }
 
-    public EventDTO(String title, LocalDate date, int capacity, double price, String status) {
+    public ToDoDTO(String title, LocalDate date, int capacity, double price, String status) {
         Title = title;
         Date = date;
         Capacity = capacity;
@@ -40,13 +40,13 @@ public class EventDTO {
         Status = status;
     }
 
-    public EventDTO(Event event) {
-        EventId = event.getEventId();
-        Title = event.getTitle();
-        Date = LocalDate.from(event.getDate());
-        Capacity = event.getCapacity();
-        Price = event.getPrice();
-        Status = event.getStatus();
+    public ToDoDTO(ToDo toDo) {
+        ToDoId = toDo.getToDoId();
+        Title = toDo.getTitle();
+        Date = LocalDate.from(toDo.getDate());
+        Capacity = toDo.getCapacity();
+        Price = toDo.getPrice();
+        Status = toDo.getStatus();
     }
 
 }
