@@ -17,7 +17,7 @@ import java.util.Set;
 @Table(name = "role")
 public class Role {
     @Id
-    @Column(name = "name", nullable = false)
+    @Column(name = "rolename", nullable = false)
     private String rolename;
 
     @ManyToMany(mappedBy = "roles")
