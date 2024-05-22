@@ -34,6 +34,9 @@ public class ToDo {
     private double Price;
     @Column(name= "status")
     private String Status;
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
     @ManyToMany
     private  Set <User> users = new HashSet<>();
 
@@ -63,5 +66,9 @@ public class ToDo {
         this.Capacity = toDoDTO.getCapacity();
         this.Price = toDoDTO.getPrice();
         this.Status = toDoDTO.getStatus();
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 }

@@ -123,17 +123,41 @@ public class ToDoController implements IToDoController {
             }
         };
     }
-
     @Override
     public Handler createToDo() {
         return ctx -> {
             ObjectNode returnObject = objectMapper.createObjectNode();
+            String authToken = ctx.header("Authorization");
+            if (authToken == null || !authToken.startsWith("Bearer ")) {
+                ctx.status(HttpStatus.UNAUTHORIZED).json(returnObject.put("msg", "Unauthorized"));
+                return;
+            }
+
+            authToken = authToken.substring(7);
+
+            UserDTO user;
+            try {
+                user = securityController.verifyToken(authToken);
+                if (user == null) {
+                    ctx.status(HttpStatus.UNAUTHORIZED).json(returnObject.put("msg", "Unauthorized"));
+                    return;
+                }
+            } catch (Exception e) {
+                ctx.status(HttpStatus.UNAUTHORIZED).json(returnObject.put("msg", "Unauthorized: " + e.getMessage()));
+                return;
+            }
+
             try {
                 // Parse the incoming JSON to a ToDoDTO
                 ToDoDTO toDoInput = ctx.bodyAsClass(ToDoDTO.class);
 
                 // Convert ToDoDTO to ToDo entity
                 ToDo toDoToCreate = convertToEntity(toDoInput);
+
+                // Set the user for the to-do
+                User userEntity = new User(); // This should be fetched from the database
+                userEntity.setUsername(user.getUsername());
+                toDoToCreate.setUser(userEntity);
 
                 // Create the to-do in the database
                 ToDo createdToDo = toDoDAO.create(toDoToCreate);
