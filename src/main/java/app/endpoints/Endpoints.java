@@ -31,24 +31,19 @@ public class Endpoints {
         ApplicationConfig applicationConfig = ApplicationConfig.getInstance();
         applicationConfig
                 .initiateServer()
-                .startServer(7070)
+                .startServer(port)
                 .setExceptionHandling()
                 .setupAccessManager()
                 .configureCors()
                 .setRoute(getSecurityRoutes())
                 .setRoute(getSecuredRoutes())
-                .setRoute(() -> {
-
-                    getUserRoutes();
-
-                })
+                .setRoute(Endpoints::getUserRoutes)
                 .checkSecurityRoles();
     }
     public static void getUserRoutes(){
         before(securityController.authenticate());
         path("/user", () -> {
             path("/", () -> {
-                before(securityController.authenticate());
                 get("/list", toDoController.getAllToDos(), RouteRoles.USER, RouteRoles.ADMIN);
                 get("/list/{date}", toDoController.getToDoByDate(), RouteRoles.USER, RouteRoles.ADMIN);
                 get("/all", userController.getAllUsers(), RouteRoles.ADMIN);
