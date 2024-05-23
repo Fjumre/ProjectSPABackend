@@ -25,8 +25,8 @@ public class UserDAO implements ISecurityDAO {
             User user = new User(username, password, email, phoneNumber);
 
             // Ensure the 'user' role exists and is retrieved or created
-            Role userRole = em.createQuery("SELECT r FROM Role r WHERE r.name = :name", Role.class)
-                    .setParameter("name", "user")
+            Role userRole = em.createQuery("SELECT r FROM Role r WHERE r.rolename = :rolename", Role.class)
+                    .setParameter("rolename", "user")
                     .getResultStream().findFirst().orElseGet(() -> {
                         Role newRole = new Role("user");
                         em.persist(newRole);
@@ -55,10 +55,10 @@ public class UserDAO implements ISecurityDAO {
 //
 //    }
         @Override
-        public User UpdateUser (String name, String password){
+        public User UpdateUser (String username, String password){
             EntityManager em = emf.createEntityManager();
             em.getTransaction().begin();
-            User user = new User(name, password);
+            User user = new User(username, password);
             Role userRole = em.find(Role.class, "user");
             if (userRole == null) {
                 userRole = new Role("user");
@@ -110,12 +110,12 @@ public class UserDAO implements ISecurityDAO {
         }
 
 
-    public User verifyUser(String name, String password) throws EntityNotFoundException {
+    public User verifyUser(String username, String password) throws EntityNotFoundException {
         EntityManager em = emf.createEntityManager();
         try {
             // Using JPQL to query by username
-            User user = em.createQuery("SELECT u FROM User u WHERE u.name = :name", User.class)
-                    .setParameter("name", name)
+            User user = em.createQuery("SELECT u FROM User u WHERE u.username = :username", User.class)
+                    .setParameter("username", username)
                     .getSingleResult();
 
 
@@ -124,7 +124,7 @@ public class UserDAO implements ISecurityDAO {
             }
             return user;
         } catch (NoResultException e) {
-             throw new EntityNotFoundException("No user found with that name: " + name);
+             throw new EntityNotFoundException("No user found with that username: " + username);
         } finally {
             em.close();
         }
@@ -189,15 +189,15 @@ public class UserDAO implements ISecurityDAO {
 
 
         @Override
-        public User addRoleToUser (String name, String roleName){
+        public User addRoleToUser (String username, String rolename){
 
             EntityManager em = emf.createEntityManager();
 
             User user;
             try {
                 em.getTransaction().begin();
-                user = em.find(User.class, name);
-                Role role = em.find(Role.class, roleName);
+                user = em.find(User.class, username);
+                Role role = em.find(Role.class, rolename);
 
                 user.addRole(role); // Modify the collection in the managed entity
 

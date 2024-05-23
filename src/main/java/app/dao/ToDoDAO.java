@@ -50,7 +50,7 @@ public ToDoDAO(EntityManagerFactory emf) {
         EntityManager em = emf.createEntityManager();
         try {
             TypedQuery<ToDo> query = em.createQuery(
-                    "SELECT t FROM ToDo t JOIN t.users u WHERE u.username = :username AND t.date = :date",
+                    "SELECT t FROM ToDo t JOIN t.users u WHERE u.username = :username AND t.Date = :date",
                     ToDo.class
             );
             query.setParameter("username", username);
@@ -158,12 +158,12 @@ public ToDoDAO(EntityManagerFactory emf) {
         }
     }
 
-    public void addUserToToDo(int userId, int toDoId) {
+    public void addUserToToDo(int id, int toDoId) {
         EntityManager em = emf.createEntityManager();
         try {
             em.getTransaction().begin();
 
-            User user = em.find(User.class, userId);
+            User user = em.find(User.class, id);
             ToDo toDo = em.find(ToDo.class, toDoId);
 
             if (user != null && toDo != null) {
@@ -191,12 +191,12 @@ public ToDoDAO(EntityManagerFactory emf) {
 
 
 
-    public void removeUserToDo(int userId, int toDoId) {
+    public void removeUserToDo(int id, int toDoId) {
         EntityManager em = emf.createEntityManager();
         try {
             em.getTransaction().begin();
 
-            User user = em.find(User.class, userId);
+            User user = em.find(User.class, id);
             ToDo toDo = em.find(ToDo.class, toDoId);
 
             if (user != null && toDo != null) {

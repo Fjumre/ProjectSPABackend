@@ -1,0 +1,9 @@
+POST http://localhost:7070/api/auth/register
+
+{
+"username": "Hans",
+"password": "1234",
+"email": "hk@hhhh.com",
+"phoneNumber": 99324422
+
+}
