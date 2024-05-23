@@ -14,8 +14,8 @@
         <issuer>cphbusiness.dk</issuer>
         <token.expiration.time>3600000</token.expiration.time>
         <db.name>projectspa</db.name>
-        <db.username>postgres</db.username>
-        <db.password>postgres</db.password>
+        <db.username>lademan</db.username>
+        <db.password>41235</db.password>
         <db.connection.string>jdbc:postgresql://localhost:5432/</db.connection.string>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
