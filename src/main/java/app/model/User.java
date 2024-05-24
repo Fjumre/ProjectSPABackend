@@ -19,7 +19,7 @@ import java.util.Set;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false, unique = true)
+    @Column(name= "id", nullable = false, unique = true)
     private int id;
 
     @Column(name = "username", nullable = false, unique = true)
@@ -38,7 +38,7 @@ public class User {
     @JoinTable(
             name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id")
+            inverseJoinColumns = @JoinColumn(name = "role_name", referencedColumnName = "rolename")
     )
     private Set<Role> roles = new HashSet<>();
 

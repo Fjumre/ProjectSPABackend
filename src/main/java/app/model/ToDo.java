@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -62,7 +61,7 @@ public class ToDo {
     public ToDo(ToDoDTO toDoDTO) {
         this.ToDoId = toDoDTO.getToDoId();
         this.Title = toDoDTO.getTitle();
-        this.Date = LocalDate.from(toDoDTO.getDate()).atStartOfDay();
+        this.Date = toDoDTO.getDate().atStartOfDay();
         this.Capacity = toDoDTO.getCapacity();
         this.Price = toDoDTO.getPrice();
         this.Status = toDoDTO.getStatus();
