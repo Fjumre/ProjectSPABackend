@@ -14,7 +14,7 @@ import java.util.Set;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "event")
+@Table(name = "todo")
 @Entity
 @NamedQuery(name = "Event.findAll", query = "SELECT e FROM ToDo e")
 
