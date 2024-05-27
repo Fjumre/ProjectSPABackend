@@ -19,7 +19,9 @@ import io.javalin.http.Handler;
 import io.javalin.http.HttpStatus;
 import io.javalin.validation.ValidationException;
 import jakarta.persistence.EntityExistsException;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.NoResultException;
 
 import java.text.ParseException;
 import java.util.Arrays;
@@ -105,6 +107,9 @@ public class SecurityController implements ISecurityController{
 
 
                 User verifiedUserEntity = securityDAO.verifyUser(user.getUsername(), user.getPassword());
+                for (int i = 0; i < verifiedUserEntity.getRoles().toArray().length; i++) {
+                    System.out.println(Arrays.toString(verifiedUserEntity.getRoles().toArray()));
+                }
                 String token = createToken(new UserDTO(verifiedUserEntity));
                 ctx.status(200).json(new TokenDTO(token, user.getUsername()));
 
@@ -138,16 +143,43 @@ public class SecurityController implements ISecurityController{
         }
         return createToken(user, ISSUER, TOKEN_EXPIRE_TIME, SECRET_KEY);
     }
-    public String createToken(UserDTO user, String ISSUER, String TOKEN_EXPIRE_TIME, String SECRET_KEY){
-        // https://codecurated.com/blog/introduction-to-jwt-jws-jwe-jwa-jwk/
+//    public String createToken(UserDTO user, String ISSUER, String TOKEN_EXPIRE_TIME, String SECRET_KEY){
+//        // https://codecurated.com/blog/introduction-to-jwt-jws-jwe-jwa-jwk/
+//        try {
+//            JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
+//                    .subject(user.getUsername())
+//                    .issuer(ISSUER)
+//                    .claim("name", user.getUsername())
+//                    .claim("roles", user.getRoles().stream().reduce("", (s1, s2) -> s1 + "," + s2))
+//                    .expirationTime(new Date(new Date().getTime() + Integer.parseInt(TOKEN_EXPIRE_TIME)))
+//                    .build();
+//            Payload payload = new Payload(claimsSet.toJSONObject());
+//
+//            JWSSigner signer = new MACSigner(SECRET_KEY);
+//            JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS256);
+//            JWSObject jwsObject = new JWSObject(jwsHeader, payload);
+//            jwsObject.sign(signer);
+//            return jwsObject.serialize();
+//
+//        } catch (JOSEException e) {
+//            e.printStackTrace();
+//            throw new ApiException(500, "Could not create token");
+//        }
+//    }
+
+    public String createToken(UserDTO user, String ISSUER, String TOKEN_EXPIRE_TIME, String SECRET_KEY) {
         try {
+            // Convert roles to a single string, ensuring it's not empty
+            String roles = String.join(",", user.getRoles());
+
             JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
                     .subject(user.getUsername())
                     .issuer(ISSUER)
                     .claim("name", user.getUsername())
-                    .claim("roles", user.getRoles().stream().reduce("", (s1, s2) -> s1 + "," + s2))
+                    .claim("roles", roles.isEmpty() ? "user" : roles)
                     .expirationTime(new Date(new Date().getTime() + Integer.parseInt(TOKEN_EXPIRE_TIME)))
                     .build();
+
             Payload payload = new Payload(claimsSet.toJSONObject());
 
             JWSSigner signer = new MACSigner(SECRET_KEY);
@@ -161,6 +193,7 @@ public class SecurityController implements ISecurityController{
             throw new ApiException(500, "Could not create token");
         }
     }
+
 
     @Override
     public boolean authorize(UserDTO user, Set<String> allowedRoles) {
@@ -182,9 +215,11 @@ public class SecurityController implements ISecurityController{
         // Checked in 'before filter' -> Check for Authorization header to find token.
         // Find user inside the token, forward the ctx object with userDTO on attribute
         // When ctx hits the endpoint it will have the user on the attribute to check for roles (ApplicationConfig -> accessManager)
+
         ObjectNode returnObject = objectMapper.createObjectNode();
         return (ctx) -> {
-            if(ctx.method().toString().equals("OPTIONS")) {
+            try {
+                if(ctx.method().toString().equals("OPTIONS")) {
                 ctx.status(200);
                 return;
             }
@@ -194,6 +229,7 @@ public class SecurityController implements ISecurityController{
                 return;
             }
             String token = header.split(" ")[1];
+            System.out.println(token);
             if (token == null) {
                 ctx.status(HttpStatus.FORBIDDEN).json(returnObject.put("msg", "Authorization header malformed"));
                 return;
@@ -202,8 +238,11 @@ public class SecurityController implements ISecurityController{
             if (verifiedTokenUser == null) {
                 ctx.status(HttpStatus.FORBIDDEN).json(returnObject.put("msg", "Invalid User or Token"));
             }
-            System.out.println("USER IN AUTHENTICATE: " + verifiedTokenUser);
             ctx.attribute("user", verifiedTokenUser);
+        } catch (Exception e) {
+                ctx.status(HttpStatus.FORBIDDEN).json(returnObject.put("msg", "Authentication failed: " + e.getMessage()));
+                //System.out.println(e.getMessage()); // Log the stack trace for debugging purposes
+            }
         };
     }
     @Override
@@ -218,7 +257,7 @@ public class SecurityController implements ISecurityController{
                 throw new NotAuthorizedException(403, "Token is not valid");
             }
         } catch (ParseException | JOSEException | NotAuthorizedException e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());
             throw new ApiException(HttpStatus.UNAUTHORIZED.getCode(), "Unauthorized. Could not verify token");
         }
     }
@@ -235,22 +274,58 @@ public class SecurityController implements ISecurityController{
         else
             throw new NotAuthorizedException(403, "Token has expired");
     }
-    public UserDTO getUserWithRolesFromToken(String token) throws ParseException {
-        // Return a user with Set of roles as strings
-        SignedJWT jwt = SignedJWT.parse(token);
-        String roles = jwt.getJWTClaimsSet().getClaim("roles").toString();
-        String username = jwt.getJWTClaimsSet().getClaim("username").toString();
+//    public UserDTO getUserWithRolesFromToken(String token) throws ParseException {
+//        // Return a user with Set of roles as strings
+//        SignedJWT jwt = SignedJWT.parse(token);
+//        String roles = jwt.getJWTClaimsSet().getClaim("roles").toString();
+//        String username = jwt.getJWTClaimsSet().getClaim("username").toString();
+//
+//        Set<String> rolesSet = Arrays
+//                .stream(roles.split(","))
+//                .collect(Collectors.toSet());
+//        return new UserDTO(username, rolesSet);
+//    }
 
-        Set<String> rolesSet = Arrays
-                .stream(roles.split(","))
+    public UserDTO getUserWithRolesFromToken(String token) throws ParseException {
+        SignedJWT jwt = SignedJWT.parse(token);
+
+        // Extract the claims
+        String rolesClaim = (String) jwt.getJWTClaimsSet().getClaim("roles");
+        String username = jwt.getJWTClaimsSet().getSubject();
+
+        // Check for null claims and handle them appropriately
+        if (rolesClaim == null) {
+            rolesClaim = "user"; // Default role if roles claim is missing
+        }
+        if (username == null) {
+            throw new RuntimeException("Missing username in token");
+        }
+        // Split roles into a set
+        Set<String> roles = Arrays.stream(rolesClaim.split(","))
+                .filter(role -> !role.trim().isEmpty())
                 .collect(Collectors.toSet());
-        return new UserDTO(username, rolesSet);
+
+        return new UserDTO(username, roles);
     }
+
+
     public int timeToExpire(String token) throws ParseException, NotAuthorizedException {
         SignedJWT jwt = SignedJWT.parse(token);
         return (int) (jwt.getJWTClaimsSet().getExpirationTime().getTime() - new Date().getTime());
     }
 
+    public User getUserByUsername(String username) {
+        EntityManager em = emf.createEntityManager();
+        try {
+            return em.createQuery("SELECT u FROM User u WHERE u.username = :username", User.class)
+                    .setParameter("username", username)
+                    .getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        } finally {
+            em.close();
+        }
+    }
 
 
 }

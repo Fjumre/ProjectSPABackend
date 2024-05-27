@@ -10,6 +10,7 @@ import jakarta.persistence.NoResultException;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.List;
+import java.util.Set;
 
 public class UserDAO implements ISecurityDAO {
     private EntityManagerFactory emf;
@@ -32,11 +33,11 @@ public class UserDAO implements ISecurityDAO {
 
             // Ensure the 'USER' role exists and is retrieved or created
             Role userRole = em.createQuery("SELECT r FROM Role r WHERE r.rolename = :rolename", Role.class)
-                    .setParameter("rolename", "USER")
+                    .setParameter("rolename", "user")
                     .getResultStream()
                     .findFirst()
                     .orElseGet(() -> {
-                        Role newRole = new Role("USER");
+                        Role newRole = new Role("user");
                         em.persist(newRole);
                         return newRole;
                     });
@@ -69,13 +70,13 @@ public class UserDAO implements ISecurityDAO {
 //
 //    }
         @Override
-        public User UpdateUser (String username, String password){
+        public User UpdateUser (String username, String password, Set<Role> roles){
             EntityManager em = emf.createEntityManager();
             em.getTransaction().begin();
-            User user = new User(username, password);
+            User user = new User(username, password, roles);
             Role userRole = em.find(Role.class, "user");
             if (userRole == null) {
-                userRole = new Role("USER");
+                userRole = new Role("user");
                 em.persist(userRole);
             }
             user.addRole(userRole);

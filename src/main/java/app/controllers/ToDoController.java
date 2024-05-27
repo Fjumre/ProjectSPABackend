@@ -40,6 +40,7 @@ public class ToDoController implements IToDoController {
     }
 
     public Handler getAllToDos() {
+        System.out.println("getalltodos");
         return ctx -> {
             ObjectNode returnObject = objectMapper.createObjectNode();
 
@@ -123,6 +124,7 @@ public class ToDoController implements IToDoController {
             }
         };
     }
+
     @Override
     public Handler createToDo() {
         return ctx -> {
@@ -154,9 +156,14 @@ public class ToDoController implements IToDoController {
                 // Convert ToDoDTO to ToDo entity
                 ToDo toDoToCreate = convertToEntity(toDoInput);
 
+                // Fetch the user entity from the database
+                User userEntity = securityController.getUserByUsername(user.getUsername());
+                if (userEntity == null) {
+                    ctx.status(HttpStatus.BAD_REQUEST).json(returnObject.put("msg", "User not found"));
+                    return;
+                }
+
                 // Set the user for the to-do
-                User userEntity = new User(); // This should be fetched from the database
-                userEntity.setUsername(user.getUsername());
                 toDoToCreate.setUser(userEntity);
 
                 // Create the to-do in the database
@@ -172,6 +179,7 @@ public class ToDoController implements IToDoController {
             }
         };
     }
+
 
     @Override
     public Handler updateToDo() {

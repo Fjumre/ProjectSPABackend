@@ -1,16 +1,15 @@
 package app.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.HashSet;
 import java.util.Set;
 
+
 @Getter
+@ToString
 @Setter
 @Entity
 @NoArgsConstructor
@@ -34,7 +33,7 @@ public class User {
     @Column(name = "phonenumber", nullable = false)
     private int phoneNumber;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
@@ -50,9 +49,10 @@ public class User {
     )
     private Set<ToDo> toDos = new HashSet<>();
 
-    public User(String username, String password) {
+    public User(String username, String password, Set<Role> roles) {
         this.username = username;
         this.password = BCrypt.hashpw(password, BCrypt.gensalt());
+        this.roles=roles;
     }
 
     public User(String username, String password, String email, int phoneNumber) {

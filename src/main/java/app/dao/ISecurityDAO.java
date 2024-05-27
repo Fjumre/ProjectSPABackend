@@ -3,7 +3,7 @@ package app.dao;
 import app.exceptions.EntityNotFoundException;
 import app.model.Role;
 import app.model.User;
-
+import java.util.Set;
 import java.util.List;
 
 public interface ISecurityDAO {
@@ -12,7 +12,7 @@ public interface ISecurityDAO {
     User addRoleToUser(String username, String role);
     //User create();
     User update(User user);
-    User UpdateUser(String name, String password);
+    User UpdateUser(String name, String password, Set<Role> roles);
     List<User> getAlleUser();
     User getUserById(int id);
     void deleteUser(int id);
