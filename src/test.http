@@ -1,9 +1,35 @@
 POST http://localhost:7070/api/auth/register
 
 {
-"username": "Jens",
+"username": "Hanne",
 "password": "1234",
-"email": "hææ@hhhh.com",
+"email": "hane@hhhh.com",
 "phoneNumber": 99324422
 
 }
+
+###
+POST http://localhost:7070/api/auth/login
+
+{
+ "username": "Hanne",
+ "password": "1234"
+}
+
+###
+
+POST http://localhost:7070/api/user/list/create
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJUaG9tYXMgSGFydG1hbm4iLCJuYW1lIjoiSGFubmUiLCJzdWIiOiJIYW5uZSIsImV4cCI6MTcxNjgwODQ0Mywicm9sZXMiOiIifQ.qdyWBo90m_Kv2gL8PAdEtvLKralVh2GIczmcr_89xmo
+Content-Type: application/json
+
+{
+  "title": "apples",
+  "date": "2024-05-29",
+  "capacity": 25,
+  "price": 2.33,
+  "status": "Not done"
+}
+
+###
+
+

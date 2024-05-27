@@ -33,6 +33,7 @@ public class ToDo {
     private double Price;
     @Column(name= "status")
     private String Status;
+    @Setter
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
@@ -59,7 +60,6 @@ public class ToDo {
     }
 
     public ToDo(ToDoDTO toDoDTO) {
-        this.ToDoId = toDoDTO.getToDoId();
         this.Title = toDoDTO.getTitle();
         this.Date = toDoDTO.getDate().atStartOfDay();
         this.Capacity = toDoDTO.getCapacity();
@@ -67,7 +67,4 @@ public class ToDo {
         this.Status = toDoDTO.getStatus();
     }
 
-    public void setUser(User user) {
-        this.user = user;
-    }
 }

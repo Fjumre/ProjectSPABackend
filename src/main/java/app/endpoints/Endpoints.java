@@ -46,6 +46,9 @@ public class Endpoints {
             path("/", () -> {
                 get("/list", toDoController.getAllToDos(), RouteRoles.USER, RouteRoles.ADMIN);
                 get("/list/{date}", toDoController.getToDoByDate(), RouteRoles.USER, RouteRoles.ADMIN);
+                get("/list/{id}", toDoController.updateToDo(), RouteRoles.USER, RouteRoles.ADMIN);
+                delete("/list/{id}", toDoController.deleteToDo(), RouteRoles.USER, RouteRoles.ADMIN);
+                post("/list/create", toDoController.createToDo(), RouteRoles.USER, RouteRoles.ADMIN);
                 get("/all", userController.getAllUsers(), RouteRoles.ADMIN);
                 get("/{id}", userController.getUserById(), RouteRoles.ADMIN);
                 post("/create", userController.createUser(), RouteRoles.ADMIN);
