@@ -5,6 +5,7 @@ import app.model.Role;
 import app.model.User;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.NoResultException;
 import org.mindrot.jbcrypt.BCrypt;
 
@@ -17,33 +18,46 @@ public class UserDAO implements ISecurityDAO {
         this.emf = emf;
     }
 
+
     @Override
     public User createUser(String username, String password, String email, Integer phoneNumber) {
         EntityManager em = emf.createEntityManager();
+        EntityTransaction transaction = em.getTransaction();
+
         try {
-            em.getTransaction().begin();
+            transaction.begin();
+
+            // Create a new user
             User user = new User(username, password, email, phoneNumber);
 
-            // Ensure the 'user' role exists and is retrieved or created
+            // Ensure the 'USER' role exists and is retrieved or created
             Role userRole = em.createQuery("SELECT r FROM Role r WHERE r.rolename = :rolename", Role.class)
-                    .setParameter("rolename", "user")
-                    .getResultStream().findFirst().orElseGet(() -> {
-                        Role newRole = new Role("user");
+                    .setParameter("rolename", "USER")
+                    .getResultStream()
+                    .findFirst()
+                    .orElseGet(() -> {
+                        Role newRole = new Role("USER");
                         em.persist(newRole);
                         return newRole;
                     });
 
-            // Assign the 'user' role to the new user
+            // Assign the 'USER' role to the new user
             user.addRole(userRole);
 
+            // Persist the new user
             em.persist(user);
-            em.getTransaction().commit();
+
+            // Commit the transaction
+            transaction.commit();
 
             return user;
-        } finally {
-            if (em.getTransaction().isActive()) {
-                em.getTransaction().rollback();
+        } catch (Exception e) {
+            if (transaction.isActive()) {
+                transaction.rollback();
             }
+            e.printStackTrace();
+            throw e;  // or handle the exception in a way that suits your application
+        } finally {
             em.close();
         }
     }
@@ -61,7 +75,7 @@ public class UserDAO implements ISecurityDAO {
             User user = new User(username, password);
             Role userRole = em.find(Role.class, "user");
             if (userRole == null) {
-                userRole = new Role("user");
+                userRole = new Role("USER");
                 em.persist(userRole);
             }
             user.addRole(userRole);
