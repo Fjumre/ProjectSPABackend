@@ -18,9 +18,6 @@ import java.util.Set;
 public class Role {
 
     @Id
-    @Column(name = "id", nullable = false)
-    private int id;
-
     @Column(name = "rolename", nullable = false, unique = true)
     private String rolename;
 
