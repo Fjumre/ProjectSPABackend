@@ -21,10 +21,13 @@ public class Role {
     @Column(name = "rolename", nullable = false, unique = true)
     private String rolename;
 
+    @Setter
+    @Getter
     @ManyToMany(mappedBy = "roles")
     private Set<User> users = new HashSet<>();
 
     public Role(String rolename) {
         this.rolename = rolename;
     }
+
 }
