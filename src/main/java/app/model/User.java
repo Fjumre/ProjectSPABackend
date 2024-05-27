@@ -113,12 +113,12 @@ public class User {
         return rolesAsStrings;
     }
 
-    public Set<String> getEventsAsStrings() {
+    public Set<String> getToDosAsStrings() {
         if (toDos.isEmpty()) {
             return null;
         }
-        Set<String> eventsAsStrings = new HashSet<>();
-        toDos.forEach(event -> eventsAsStrings.add(event.getTitle()));
-        return eventsAsStrings;
+        Set<String> toDoAsStrings = new HashSet<>();
+        toDos.forEach(event -> toDoAsStrings.add(event.getTitle()));
+        return toDoAsStrings;
     }
 }
