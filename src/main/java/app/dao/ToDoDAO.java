@@ -220,5 +220,20 @@ public ToDoDAO(EntityManagerFactory emf) {
             em.close();
         }
     }
+    public ToDo findByIdAndDate(int id, LocalDate date) {
+        EntityManager em = emf.createEntityManager();
+        try {
+            return em.createQuery("SELECT t FROM ToDo t WHERE t.id = :id AND t.Date = :date", ToDo.class)
+                    .setParameter("id", id)
+                    .setParameter("date", date)
+                    .getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        } finally {
+            em.close();
+        }
+    }
+
+
 }
 
