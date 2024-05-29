@@ -36,4 +36,4 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: fjumre/backend:latest
+          tags:  ${{ secrets.DOCKERHUB_USERNAME }}/backendspa:latest
