@@ -40,7 +40,7 @@ public class ToDoController implements IToDoController {
     }
 
     public Handler getAllToDos() {
-        System.out.println("getalltodos");
+
         return ctx -> {
             ObjectNode returnObject = objectMapper.createObjectNode();
 

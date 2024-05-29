@@ -257,7 +257,7 @@ public class SecurityController implements ISecurityController{
                 throw new NotAuthorizedException(403, "Token is not valid");
             }
         } catch (ParseException | JOSEException | NotAuthorizedException e) {
-            //System.out.println(e.getMessage());
+            System.out.println(e.getMessage());
             throw new ApiException(HttpStatus.UNAUTHORIZED.getCode(), "Unauthorized. Could not verify token");
         }
     }
