@@ -1,5 +1,6 @@
 package app.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.mindrot.jbcrypt.BCrypt;
@@ -39,6 +40,7 @@ public class User {
             joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "rolename", referencedColumnName = "rolename")
     )
+    @JsonIgnore
     private Set<Role> roles = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
@@ -63,6 +65,10 @@ public class User {
     }
 
     public User(String password) {
+        this.password = BCrypt.hashpw(password, BCrypt.gensalt());
+    }
+
+    public void setPassword(String password) {
         this.password = BCrypt.hashpw(password, BCrypt.gensalt());
     }
 

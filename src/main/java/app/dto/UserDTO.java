@@ -24,6 +24,8 @@ public class UserDTO {
 
     private Set<String> roles = new HashSet<>();
     private Set<String> toDos = new HashSet<>();
+
+    private String currentPassword;
     private String newPassword;
 
     public UserDTO(String username, String password) {

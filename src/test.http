@@ -1,9 +1,9 @@
 POST http://localhost:7070/api/auth/register
 
 {
-"username": "Alll",
+"username": "loo",
 "password": "1234",
-"email": "apll@hhhh.com",
+"email": "loo@hhhh.com",
 "phoneNumber": 99324422
 
 }
@@ -12,19 +12,19 @@ POST http://localhost:7070/api/auth/register
 POST http://localhost:7070/api/auth/login
 
 {
- "username": "Alll",
+ "username": "loo",
  "password": "1234"
 }
 
 ###
 
 POST http://localhost:7070/api/user/list/create
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJUaG9tYXMgSGFydG1hbm4iLCJuYW1lIjoiQXB1ZGQiLCJzdWIiOiJBcHVkZCIsImV4cCI6MTcxNjgxNzE4Niwicm9sZXMiOiJ1c2VyIn0.bITk-j30zL1mHJkGggx5u24g-lJEfG3DjhCbHnh9-xI
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJUaG9tYXMgSGFydG1hbm4iLCJuYW1lIjoiQWxsbCIsInN1YiI6IkFsbGwiLCJleHAiOjE3MTcwNjEwMDQsInJvbGVzIjoidXNlciJ9.Z3L99c2L0RAse3dLaLod5hqFqYMjcxrhKg5ju0ydoSw
 Content-Type: application/json
 
 {
   "title": "apples",
-  "date": "2024-05-01",
+  "date": "2024-07-01",
   "capacity": 25,
   "price": 2.33,
   "status": "Not done"
@@ -34,3 +34,41 @@ Content-Type: application/json
 
 GET http://localhost:7070/api/user/list
 Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJUaG9tYXMgSGFydG1hbm4iLCJuYW1lIjoiQXB1ZGQiLCJzdWIiOiJBcHVkZCIsImV4cCI6MTcxNjgxNzE4Niwicm9sZXMiOiJ1c2VyIn0.bITk-j30zL1mHJkGggx5u24g-lJEfG3DjhCbHnh9-xI
+
+###
+
+PUT http://localhost:7070/api/user/list/update/3
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJUaG9tYXMgSGFydG1hbm4iLCJuYW1lIjoiQWxsbCIsInN1YiI6IkFsbGwiLCJleHAiOjE3MTcwNjEwMDQsInJvbGVzIjoidXNlciJ9.Z3L99c2L0RAse3dLaLod5hqFqYMjcxrhKg5ju0ydoSw
+
+{
+  "title": "apples",
+  "date": "2024-07-01",
+  "capacity": 25,
+  "price": 2.33,
+  "status": "Done"
+}
+
+###
+
+DELETE http://localhost:7070/api/user/list/delete/3
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJUaG9tYXMgSGFydG1hbm4iLCJuYW1lIjoiQWxsbCIsInN1YiI6IkFsbGwiLCJleHAiOjE3MTcwNjEwMDQsInJvbGVzIjoidXNlciJ9.Z3L99c2L0RAse3dLaLod5hqFqYMjcxrhKg5ju0ydoSw
+
+
+###
+
+PUT  http://localhost:7070/api/user/update/11
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJUaG9tYXMgSGFydG1hbm4iLCJuYW1lIjoia2xvZHMiLCJzdWIiOiJrbG9kcyIsImV4cCI6MTcxNzA2MzY1Mywicm9sZXMiOiJ1c2VyIn0.oCSUGfnl0GcUCRqKxqIzJxU2tTNAAbQL_pBLCg9LyJ0
+
+{
+"username": "klods",
+"password": "1234",
+"email": "klods@hhhh.com",
+"phoneNumber": 423
+}
+
+
+###
+
+DELETE http://localhost:7070/api/user/delete/12
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJUaG9tYXMgSGFydG1hbm4iLCJuYW1lIjoibG9vIiwic3ViIjoibG9vIiwiZXhwIjoxNzE3MDY1NTA1LCJyb2xlcyI6InVzZXIifQ.wv_AfRQoUO_69Lnth9W6ZhT-8SwAvnwXn6ZS3GhiZV8
+

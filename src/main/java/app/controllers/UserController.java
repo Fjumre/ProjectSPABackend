@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.javalin.http.Handler;
 import jakarta.persistence.EntityManagerFactory;
+import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.List;
 import java.util.Map;
@@ -57,13 +58,18 @@ public class UserController implements IUserController{
             UserDTO userDTO = ctx.bodyAsClass(UserDTO.class);
 
             try {
-                User newUser = userDAO.createUser(userDTO.getUsername(), userDTO.getPassword(), userDTO.getEmail(), userDTO.getPhoneNumber());
-                ctx.status(201);
-                ctx.json(newUser);
-            } catch (Exception e) {
+                User newUser = userDAO.createUser(
+                        userDTO.getUsername(),
+                        BCrypt.hashpw(userDTO.getNewPassword(), BCrypt.gensalt()),
+                        userDTO.getEmail(),
+                        userDTO.getPhoneNumber()
+                );
 
-                ctx.status(500); // Internal Server Error
-                ctx.json("Internal server error");
+                ctx.status(201);
+                ctx.json(new UserDTO(newUser));
+            } catch (Exception e) {
+                ctx.status(500);
+                ctx.json("Internal server error " + e);
             }
         };
     }
@@ -88,30 +94,43 @@ public class UserController implements IUserController{
     @Override
     public Handler updateUser() {
         return (ctx) -> {
-
             UserDTO userDTO = ctx.bodyAsClass(UserDTO.class);
-
             int userId = Integer.parseInt(ctx.pathParam("id"));
 
             try {
                 User userToUpdate = userDAO.getUserById(userId);
 
+                if (userToUpdate == null) {
+                    ctx.status(404);
+                    ctx.json("User not found");
+                    return;
+                }
 
                 userToUpdate.setUsername(userDTO.getUsername());
                 userToUpdate.setEmail(userDTO.getEmail());
-                userToUpdate.setPassword(userDTO.getPassword());
+
+                if (userDTO.getNewPassword() != null && !userDTO.getNewPassword().isEmpty()) {
+                    // Verify the current password
+                    if (!BCrypt.checkpw(userDTO.getCurrentPassword(), userToUpdate.getPassword())) {
+                        ctx.status(401);
+                        ctx.json("Current password is incorrect");
+                        return;
+                    }
+                    // Hash and set the new password
+                    userToUpdate.setPassword(BCrypt.hashpw(userDTO.getNewPassword(), BCrypt.gensalt()));
+                }
+
                 userToUpdate.setPhoneNumber(userDTO.getPhoneNumber());
 
-
                 User updatedUser = userDAO.update(userToUpdate);
-                ctx.json(updatedUser);
-            }catch (Exception e) {
-
+                ctx.json(updatedUser.getUsername()+ " "+ updatedUser.getEmail() + " "+updatedUser.getPhoneNumber());
+            } catch (Exception e) {
                 ctx.status(500);
-                ctx.json("Internal server error");
+                ctx.json("Internal server error "+ e);
             }
         };
     }
+
 
     @Override
     public Handler deleteUser() {
