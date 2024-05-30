@@ -41,7 +41,7 @@ public class User {
     )
     private Set<Role> roles = new HashSet<>();
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_todos",
             joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),

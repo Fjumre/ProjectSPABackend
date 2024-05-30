@@ -1,9 +1,9 @@
 POST http://localhost:7070/api/auth/register
 
 {
-"username": "Apudd",
+"username": "Alll",
 "password": "1234",
-"email": "apudd@hhhh.com",
+"email": "apll@hhhh.com",
 "phoneNumber": 99324422
 
 }
@@ -12,7 +12,7 @@ POST http://localhost:7070/api/auth/register
 POST http://localhost:7070/api/auth/login
 
 {
- "username": "Hanne",
+ "username": "Alll",
  "password": "1234"
 }
 
