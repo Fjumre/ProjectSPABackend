@@ -2,6 +2,7 @@ package app.controllers;
 
 import app.config.HibernateConfig;
 import app.dao.ToDoDAO;
+import app.dao.UserDAO;
 import app.dto.ToDoDTO;
 import app.dto.UserDTO;
 import app.model.ToDo;
@@ -10,17 +11,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import io.javalin.http.Context;
 import io.javalin.http.Handler;
 import io.javalin.http.HttpStatus;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.NoResultException;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ToDoController implements IToDoController {
     private final ToDoDAO toDoDAO;
+    private UserDAO userDAO;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final SecurityController securityController = new SecurityController();
     private final EntityManagerFactory emf = HibernateConfig.getEntityManagerFactory();
@@ -87,10 +93,10 @@ public class ToDoController implements IToDoController {
 
             authToken = authToken.substring(7);
 
-            UserDTO user;
+            String username;
             try {
-                user = securityController.verifyToken(authToken);
-                if (user == null) {
+                username = securityController.verifyToken(authToken).getUsername();
+                if (username == null) {
                     ctx.status(HttpStatus.UNAUTHORIZED).json(returnObject.put("msg", "Unauthorized"));
                     return;
                 }
@@ -100,8 +106,104 @@ public class ToDoController implements IToDoController {
             }
 
             try {
+                User user = userDAO.findByUsername(username);
+                if (user == null) {
+                    ctx.status(HttpStatus.BAD_REQUEST).json(returnObject.put("msg", "User not found"));
+                    return;
+                }
+
                 LocalDate date = LocalDate.parse(ctx.pathParam("date"));
-                List<ToDo> toDos = toDoDAO.getToDosByDateAndUsername(user.getUsername(), date);
+                List<ToDo> toDos = toDoDAO.getToDosByDateAndId(user.getId(), date);
+                if (toDos.isEmpty()) {
+                    ctx.status(HttpStatus.NOT_FOUND).json(returnObject.put("msg", "No to-dos found for the specified date"));
+                    return;
+                }
+
+                List<ToDoDTO> toDoDTOS = toDos.stream().map(ToDoDTO::new).collect(Collectors.toList());
+                ctx.json(toDoDTOS);
+            } catch (Exception e) {
+                ctx.status(HttpStatus.INTERNAL_SERVER_ERROR).json(returnObject.put("msg", "Internal server error: " + e.getMessage()));
+            }
+        };
+    }
+
+    @Override
+    public Handler getUserTodos() {
+        return ctx -> {
+            ObjectNode returnObject = objectMapper.createObjectNode();
+
+            // Check for authentication
+            String authToken = ctx.header("Authorization");
+            if (authToken == null || !authToken.startsWith("Bearer ")) {
+                ctx.status(HttpStatus.UNAUTHORIZED).json(returnObject.put("msg", "Unauthorized"));
+                return;
+            }
+
+            // Remove the "Bearer " prefix to get the actual token
+            authToken = authToken.substring(7);
+
+            UserDTO userDTO;
+            try {
+                userDTO = securityController.verifyToken(authToken);
+                if (userDTO == null) {
+                    ctx.status(HttpStatus.UNAUTHORIZED).json(returnObject.put("msg", "Unauthorized"));
+                    return;
+                }
+            } catch (Exception e) {
+                ctx.status(HttpStatus.UNAUTHORIZED).json(returnObject.put("msg", "Unauthorized: " + e.getMessage()));
+                return;
+            }
+
+            try {
+                User user = securityController.getUserByUsername(userDTO.getUsername());
+                if (user == null) {
+                    ctx.status(HttpStatus.UNAUTHORIZED).json(returnObject.put("msg", "Unauthorized"));
+                    return;
+                }
+                List<ToDoDTO> toDoDTOS = user.getToDos().stream().map(ToDoDTO::new).collect(Collectors.toList());
+                ctx.json(toDoDTOS);
+            } catch (Exception e) {
+                ctx.status(HttpStatus.INTERNAL_SERVER_ERROR).json(returnObject.put("msg", "Internal server error: " + e.getMessage()));
+            }
+        };
+    }
+
+
+
+    @Override
+    public Handler getAllToDosById() {
+        return ctx -> {
+            ObjectNode returnObject = objectMapper.createObjectNode();
+
+            // Check for authentication
+            String authToken = ctx.header("Authorization");
+            if (authToken == null || !authToken.startsWith("Bearer ")) {
+                ctx.status(HttpStatus.UNAUTHORIZED).json(returnObject.put("msg", "Unauthorized"));
+                return;
+            }
+
+            // Remove the "Bearer " prefix to get the actual token
+            authToken = authToken.substring(7);
+
+            UserDTO userDTO;
+            try {
+                userDTO = securityController.verifyToken(authToken);
+                if (userDTO == null) {
+                    ctx.status(HttpStatus.UNAUTHORIZED).json(returnObject.put("msg", "Unauthorized"));
+                    return;
+                }
+            } catch (Exception e) {
+                ctx.status(HttpStatus.UNAUTHORIZED).json(returnObject.put("msg", "Unauthorized: " + e.getMessage()));
+                return;
+            }
+
+            try {
+                User user = securityController.getUserByUsername(userDTO.getUsername());
+                if (user == null) {
+                    ctx.status(HttpStatus.UNAUTHORIZED).json(returnObject.put("msg", "Unauthorized"));
+                    return;
+                }
+                List<ToDo> toDos = toDoDAO.getAllToDosByID(user.getId());
                 List<ToDoDTO> toDoDTOS = toDos.stream().map(ToDoDTO::new).collect(Collectors.toList());
                 ctx.json(toDoDTOS);
             } catch (Exception e) {
@@ -127,6 +229,44 @@ public class ToDoController implements IToDoController {
     }
 
     @Override
+    public Handler getToDoByUserId() {
+        return ctx -> {
+            ObjectNode returnObject = objectMapper.createObjectNode();
+            try {
+                int user_id = getLoggedInUserId(ctx);
+                List<ToDo> toDoList = toDoDAO.getToDoByUserId(user_id);
+                List<ToDoDTO> toDoDTOList = toDoList.stream()
+                        .map(ToDoDTO::new)
+                        .collect(Collectors.toList());
+                ctx.json(toDoDTOList);
+            } catch (Exception e) {
+                ctx.status(500).json(returnObject.put("msg", "Internal server error"));
+            }
+        };
+    }
+
+
+    private int getLoggedInUserId(Context ctx) {
+        String userId = ctx.sessionAttribute("user_id");
+        if (userId != null) {
+            return Integer.parseInt(userId);
+        }
+        throw new IllegalStateException("User not logged in");
+    }
+
+    public User getUserByUsername(String username) {
+        EntityManager em = emf.createEntityManager();
+        try {
+            return em.createQuery("SELECT u FROM User u WHERE u.username = :username", User.class)
+                    .setParameter("username", username)
+                    .getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        } finally {
+            em.close();
+        }
+    }
+    @Override
     public Handler createToDo() {
         return ctx -> {
             ObjectNode returnObject = objectMapper.createObjectNode();
@@ -138,10 +278,10 @@ public class ToDoController implements IToDoController {
 
             authToken = authToken.substring(7);
 
-            UserDTO user;
+            UserDTO userDTO;
             try {
-                user = securityController.verifyToken(authToken);
-                if (user == null) {
+                userDTO = securityController.verifyToken(authToken);
+                if (userDTO == null) {
                     ctx.status(HttpStatus.UNAUTHORIZED).json(returnObject.put("msg", "Unauthorized"));
                     return;
                 }
@@ -150,7 +290,9 @@ public class ToDoController implements IToDoController {
                 return;
             }
 
+            EntityManager em = emf.createEntityManager();
             try {
+                em.getTransaction().begin();
                 // Parse the incoming JSON to a ToDoDTO
                 ToDoDTO toDoInput = ctx.bodyAsClass(ToDoDTO.class);
 
@@ -158,28 +300,43 @@ public class ToDoController implements IToDoController {
                 ToDo toDoToCreate = convertToEntity(toDoInput);
 
                 // Fetch the user entity from the database
-                User userEntity = securityController.getUserByUsername(user.getUsername());
+                User userEntity = getUserByUsername(userDTO.getUsername());
                 if (userEntity == null) {
                     ctx.status(HttpStatus.BAD_REQUEST).json(returnObject.put("msg", "User not found"));
                     return;
                 }
 
+                // Merge the detached User entity into the current persistence context
+                userEntity = em.merge(userEntity);
+
                 // Set the user for the to-do
                 toDoToCreate.setUser(userEntity);
 
-                // Create the to-do in the database
-                ToDo createdToDo = toDoDAO.create(toDoToCreate);
+                // Add the to-do to the user's set of to-dos
+                userEntity.getToDos().add(toDoToCreate);
+
+                // Persist the to-do entity
+                em.persist(toDoToCreate);
+
+                // Commit the transaction
+                em.getTransaction().commit();
 
                 // Convert the created ToDo back to ToDoDTO for response
-                ToDoDTO createdToDoDTO = new ToDoDTO(createdToDo);
+                ToDoDTO createdToDoDTO = new ToDoDTO(toDoToCreate);
 
                 // Set status as CREATED and return the created to-do
                 ctx.status(HttpStatus.CREATED).json(createdToDoDTO);
             } catch (Exception e) {
-                ctx.status(500).json(returnObject.put("msg", "Internal server error: " + e.getMessage()));
+                if (em.getTransaction().isActive()) {
+                    em.getTransaction().rollback();
+                }
+                ctx.status(HttpStatus.INTERNAL_SERVER_ERROR).json(returnObject.put("msg", "Internal server error: " + e.getMessage()));
+            } finally {
+                em.close();
             }
         };
     }
+
 
 
     @Override
@@ -218,7 +375,7 @@ public class ToDoController implements IToDoController {
 
     private void updateToDoEntityWithDTO(ToDo toDo, ToDoDTO dto) {
         toDo.setTitle(dto.getTitle());
-        toDo.setDate(dto.getDate().atStartOfDay());
+        toDo.setDate(dto.getDate());
         toDo.setCapacity(dto.getCapacity());
         toDo.setPrice(dto.getPrice());
         toDo.setStatus(dto.getStatus());

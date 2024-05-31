@@ -36,6 +36,18 @@ public ToDoDAO(EntityManagerFactory emf) {
         return em.createQuery("SELECT e FROM ToDo e", ToDo.class).getResultList();
 
     }
+    public List<ToDo> getAllToDosByID(int user_id) {
+        EntityManager em = emf.createEntityManager();
+        try {
+            TypedQuery<ToDo> query = em.createQuery(
+                    "SELECT t FROM ToDo t JOIN t.user u WHERE u.id = :user_id", ToDo.class);
+            query.setParameter("user_id", user_id);
+            return query.getResultList();
+        } finally {
+            em.close();
+        }
+    }
+
     public List<ToDo> getToDosByDate(Date date) {
         EntityManager em = emf.createEntityManager();
         try {
@@ -49,21 +61,61 @@ public ToDoDAO(EntityManagerFactory emf) {
     public List<ToDo> getToDosByDateAndUsername(String username, LocalDate date) {
         EntityManager em = emf.createEntityManager();
         try {
+            System.out.println("Querying for username: " + username + " on date: " + date);
             TypedQuery<ToDo> query = em.createQuery(
                     "SELECT t FROM ToDo t JOIN t.users u WHERE u.username = :username AND t.Date = :date",
                     ToDo.class
             );
             query.setParameter("username", username);
-            query.setParameter("date", date.atStartOfDay());
+            query.setParameter("date", date);
+            List<ToDo> results = query.getResultList();
+            System.out.println("Found to-dos: " + results.size());
+            return results;
+        } finally {
+            em.close();
+        }
+    }
+
+    public List<ToDo> getToDosByDateAndId(int id, LocalDate date) {
+        EntityManager em = emf.createEntityManager();
+        try {
+
+            TypedQuery<ToDo> query = em.createQuery(
+                    "SELECT t FROM ToDo t JOIN t.user u WHERE u.id = :id AND t.Date = :date",
+                    ToDo.class
+            );
+            query.setParameter("id", id);
+            query.setParameter("date", date);
+            List<ToDo> results = query.getResultList();
+            System.out.println("Found to-dos: " + results.size());
+            return results;
+        } finally {
+            em.close();
+        }
+    }
+
+
+
+
+    public ToDo getToDoById(int id) {
+        EntityManager em = emf.createEntityManager();
+        return em.find(ToDo.class, id);
+    }
+
+    public List<ToDo> getToDoByUserId(int user_id) {
+        EntityManager em = emf.createEntityManager();
+        try {
+            TypedQuery<ToDo> query = em.createQuery(
+                    "SELECT t FROM ToDo t WHERE t.user.id = :user_id", ToDo.class);
+            query.setParameter("user_id", user_id);
             return query.getResultList();
         } finally {
             em.close();
         }
     }
-    public ToDo getToDoById(int id) {
-        EntityManager em = emf.createEntityManager();
-        return em.find(ToDo.class, id);
-    }
+
+
+
 
 
     public List<ToDo> getToDoByStatus(String status) {
@@ -80,9 +132,13 @@ public ToDoDAO(EntityManagerFactory emf) {
 
     public ToDo create(ToDo toDo) {
         EntityManager em = emf.createEntityManager();
-        em.getTransaction().begin();
-        em.persist(toDo);
-        em.getTransaction().commit();
+        try {
+            em.getTransaction().begin();
+            em.persist(toDo);
+            em.getTransaction().commit();
+        } finally {
+            em.close();
+        }
         return toDo;
     }
     public ToDo read(int id) {

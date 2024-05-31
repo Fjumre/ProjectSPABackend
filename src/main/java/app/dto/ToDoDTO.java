@@ -1,6 +1,5 @@
 package app.dto;
 
-
 import app.model.ToDo;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
@@ -41,12 +40,11 @@ public class ToDoDTO {
     }
 
     public ToDoDTO(ToDo toDo) {
-        ToDoId = toDo.getToDoId();
-        Title = toDo.getTitle();
-        Date = LocalDate.from(toDo.getDate());
-        Capacity = toDo.getCapacity();
-        Price = toDo.getPrice();
-        Status = toDo.getStatus();
+        this.ToDoId = toDo.getToDoId();
+        this.Title = toDo.getTitle();
+        this.Date = toDo.getDate();
+        this.Capacity = toDo.getCapacity();
+        this.Price = toDo.getPrice();
+        this.Status = toDo.getStatus();
     }
-
 }

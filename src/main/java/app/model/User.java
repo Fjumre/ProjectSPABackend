@@ -1,6 +1,7 @@
 package app.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import org.mindrot.jbcrypt.BCrypt;
@@ -40,7 +41,6 @@ public class User {
             joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "rolename", referencedColumnName = "rolename")
     )
-    @JsonIgnore
     private Set<Role> roles = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
@@ -49,12 +49,13 @@ public class User {
             joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "todo_id", referencedColumnName = "todoid")
     )
+    @JsonIgnore
     private Set<ToDo> toDos = new HashSet<>();
 
     public User(String username, String password, Set<Role> roles) {
         this.username = username;
         this.password = BCrypt.hashpw(password, BCrypt.gensalt());
-        this.roles=roles;
+        this.roles = roles;
     }
 
     public User(String username, String password, String email, int phoneNumber) {

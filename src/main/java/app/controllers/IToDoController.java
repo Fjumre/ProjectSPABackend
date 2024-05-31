@@ -16,4 +16,7 @@ public interface IToDoController {
     Handler registerUserForToDo();
     Handler removeUserFromToDo();
     Handler getAllToDosByStatus();
+    Handler getToDoByUserId();
+    Handler getAllToDosById();
+    Handler getUserTodos();
 }

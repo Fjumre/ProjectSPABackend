@@ -3,10 +3,7 @@ package app.dao;
 import app.exceptions.EntityNotFoundException;
 import app.model.Role;
 import app.model.User;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.EntityTransaction;
-import jakarta.persistence.NoResultException;
+import jakarta.persistence.*;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.List;
@@ -240,4 +237,18 @@ public class UserDAO implements ISecurityDAO {
         }
 
 
+    public User findByUsername(String username) {
+        EntityManager em = emf.createEntityManager();
+        try {
+            TypedQuery<User> query = em.createQuery("SELECT u FROM User u WHERE u.username = :username", User.class);
+            query.setParameter("username", username);
+            return query.getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        } finally {
+            em.close();
+        }
     }
+
+
+}

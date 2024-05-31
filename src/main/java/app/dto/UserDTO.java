@@ -1,5 +1,6 @@
 package app.dto;
 
+import app.model.ToDo;
 import app.model.User;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,9 +25,8 @@ public class UserDTO {
 
     private Set<String> roles = new HashSet<>();
     private Set<String> toDos = new HashSet<>();
-
-    private String currentPassword;
     private String newPassword;
+    private String CurrentPassword;
 
     public UserDTO(String username, String password) {
         this.username = username;
@@ -56,7 +56,7 @@ public class UserDTO {
         this.toDos = user.getToDosAsStrings();
     }
 
-    public UserDTO(String username, Set<String> roleSet){
+    public UserDTO(String username, Set<String> roleSet) {
         this.username = username;
         this.roles = roleSet;
     }
@@ -69,7 +69,11 @@ public class UserDTO {
         return userDTOList;
     }
 
-    public Set<String> getToDos() {
-        return toDos;
+    public static List<ToDoDTO> toDoDTOList(Set<ToDo> toDos) {
+        List<ToDoDTO> toDoDTOList = new ArrayList<>();
+        for (ToDo toDo : toDos) {
+            toDoDTOList.add(new ToDoDTO(toDo));
+        }
+        return toDoDTOList;
     }
 }

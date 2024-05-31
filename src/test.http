@@ -1,9 +1,9 @@
 POST http://localhost:7070/api/auth/register
 
 {
-"username": "loo",
+"username": "lllloo",
 "password": "1234",
-"email": "loo@hhhh.com",
+"email": "lllloo@hhhh.com",
 "phoneNumber": 99324422
 
 }
@@ -12,18 +12,18 @@ POST http://localhost:7070/api/auth/register
 POST http://localhost:7070/api/auth/login
 
 {
- "username": "loo",
+ "username": "ooo",
  "password": "1234"
 }
 
 ###
 
 POST http://localhost:7070/api/user/list/create
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJUaG9tYXMgSGFydG1hbm4iLCJuYW1lIjoiQWxsbCIsInN1YiI6IkFsbGwiLCJleHAiOjE3MTcwNjEwMDQsInJvbGVzIjoidXNlciJ9.Z3L99c2L0RAse3dLaLod5hqFqYMjcxrhKg5ju0ydoSw
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJUaG9tYXMgSGFydG1hbm4iLCJuYW1lIjoib29vIiwic3ViIjoib29vIiwiZXhwIjoxNzE3MDc4NDM1LCJyb2xlcyI6InVzZXIifQ.0St7POfsqtCGiQoKPvv5Rm0PtwRCXZ4Rc-wmiIaXS2M,
 Content-Type: application/json
 
 {
-  "title": "apples",
+  "title": "apples551",
   "date": "2024-07-01",
   "capacity": 25,
   "price": 2.33,
@@ -71,4 +71,26 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJUaG9tYXMgSGFydG1hbm4iLCJuY
 
 DELETE http://localhost:7070/api/user/delete/12
 Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJUaG9tYXMgSGFydG1hbm4iLCJuYW1lIjoibG9vIiwic3ViIjoibG9vIiwiZXhwIjoxNzE3MDY1NTA1LCJyb2xlcyI6InVzZXIifQ.wv_AfRQoUO_69Lnth9W6ZhT-8SwAvnwXn6ZS3GhiZV8
+
+###
+
+GET http://localhost:7070/api/user/list/2024-07-01
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJUaG9tYXMgSGFydG1hbm4iLCJuYW1lIjoib29vIiwic3ViIjoib29vIiwiZXhwIjoxNzE3MDc4NDM1LCJyb2xlcyI6InVzZXIifQ.0St7POfsqtCGiQoKPvv5Rm0PtwRCXZ4Rc-wmiIaXS2M
+
+###
+
+GET http://localhost:7070/api/user/list
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJUaG9tYXMgSGFydG1hbm4iLCJuYW1lIjoib29vIiwic3ViIjoib29vIiwiZXhwIjoxNzE3MTQ5NDQ5LCJyb2xlcyI6InVzZXIifQ.xRlLwV_o4tJM5DM_v_ihIARQD3jqLXOKdYp30SmFvQU
+
+
+###
+
+GET http://localhost:7070/api/user/list/13
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJUaG9tYXMgSGFydG1hbm4iLCJuYW1lIjoib29vIiwic3ViIjoib29vIiwiZXhwIjoxNzE3MTQ5NDQ5LCJyb2xlcyI6InVzZXIifQ.xRlLwV_o4tJM5DM_v_ihIARQD3jqLXOKdYp30SmFvQU
+
+###
+
+GET http://localhost:7070/api/user/list/todos
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJUaG9tYXMgSGFydG1hbm4iLCJuYW1lIjoib29vIiwic3ViIjoib29vIiwiZXhwIjoxNzE3MTUxNjQ0LCJyb2xlcyI6InVzZXIifQ.Y75je8vL5Wyf0AqaneKOLc_3KHaSHueMTc26iRfOGqU
+
 
