@@ -14,37 +14,29 @@ import java.time.LocalDate;
 @Setter
 @ToString
 public class ToDoDTO {
-    private int ToDoId;
-    private String Title;
+    private int toDoId;
+    private String title;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private LocalDate Date;
-    private int Capacity;
-    private double Price;
-    private String Status;
+    private LocalDate date;
+    private int capacity;
+    private double price;
+    private String status;
 
     public ToDoDTO(int toDoId, String title, LocalDate date, int capacity, double price, String status) {
-        ToDoId = toDoId;
-        Title = title;
-        Date = date;
-        Capacity = capacity;
-        Price = price;
-        Status = status;
-    }
-
-    public ToDoDTO(String title, LocalDate date, int capacity, double price, String status) {
-        Title = title;
-        Date = date;
-        Capacity = capacity;
-        Price = price;
-        Status = status;
+        this.toDoId = toDoId;
+        this.title = title;
+        this.date = date;
+        this.capacity = capacity;
+        this.price = price;
+        this.status = status;
     }
 
     public ToDoDTO(ToDo toDo) {
-        this.ToDoId = toDo.getToDoId();
-        this.Title = toDo.getTitle();
-        this.Date = toDo.getDate();
-        this.Capacity = toDo.getCapacity();
-        this.Price = toDo.getPrice();
-        this.Status = toDo.getStatus();
+        this.toDoId = toDo.getToDoId();
+        this.title = toDo.getTitle();
+        this.date = toDo.getDate();
+        this.capacity = toDo.getCapacity();
+        this.price = toDo.getPrice();
+        this.status = toDo.getStatus();
     }
 }

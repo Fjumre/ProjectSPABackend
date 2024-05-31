@@ -9,6 +9,7 @@ import app.model.ToDo;
 import app.model.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.javalin.http.Context;
@@ -19,6 +20,7 @@ import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.NoResultException;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,10 +29,13 @@ import java.util.stream.Collectors;
 public class ToDoController implements IToDoController {
     private final ToDoDAO toDoDAO;
     private UserDAO userDAO;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
     private final SecurityController securityController = new SecurityController();
     private final EntityManagerFactory emf = HibernateConfig.getEntityManagerFactory();
-
+    static {
+        objectMapper.registerModule(new JavaTimeModule());
+    }
     public ToDoController(ToDoDAO toDoDAO) {
         this.toDoDAO = toDoDAO;
     }
@@ -86,6 +91,7 @@ public class ToDoController implements IToDoController {
         return ctx -> {
             ObjectNode returnObject = objectMapper.createObjectNode();
             String authToken = ctx.header("Authorization");
+
             if (authToken == null || !authToken.startsWith("Bearer ")) {
                 ctx.status(HttpStatus.UNAUTHORIZED).json(returnObject.put("msg", "Unauthorized"));
                 return;
@@ -112,8 +118,16 @@ public class ToDoController implements IToDoController {
                     return;
                 }
 
-                LocalDate date = LocalDate.parse(ctx.pathParam("date"));
+                LocalDate date;
+                try {
+                    date = LocalDate.parse(ctx.pathParam("date"));
+                } catch (DateTimeParseException e) {
+                    ctx.status(HttpStatus.BAD_REQUEST).json(returnObject.put("msg", "Invalid date format"));
+                    return;
+                }
+
                 List<ToDo> toDos = toDoDAO.getToDosByDateAndId(user.getId(), date);
+                System.out.println("Fetched to-dos: " + toDos); // Logging fetched to-dos
                 if (toDos.isEmpty()) {
                     ctx.status(HttpStatus.NOT_FOUND).json(returnObject.put("msg", "No to-dos found for the specified date"));
                     return;
@@ -126,6 +140,7 @@ public class ToDoController implements IToDoController {
             }
         };
     }
+
 
     @Override
     public Handler getUserTodos() {
@@ -293,38 +308,29 @@ public class ToDoController implements IToDoController {
             EntityManager em = emf.createEntityManager();
             try {
                 em.getTransaction().begin();
-                // Parse the incoming JSON to a ToDoDTO
+
                 ToDoDTO toDoInput = ctx.bodyAsClass(ToDoDTO.class);
 
-                // Convert ToDoDTO to ToDo entity
                 ToDo toDoToCreate = convertToEntity(toDoInput);
 
-                // Fetch the user entity from the database
                 User userEntity = getUserByUsername(userDTO.getUsername());
                 if (userEntity == null) {
                     ctx.status(HttpStatus.BAD_REQUEST).json(returnObject.put("msg", "User not found"));
                     return;
                 }
 
-                // Merge the detached User entity into the current persistence context
                 userEntity = em.merge(userEntity);
 
-                // Set the user for the to-do
                 toDoToCreate.setUser(userEntity);
 
-                // Add the to-do to the user's set of to-dos
                 userEntity.getToDos().add(toDoToCreate);
 
-                // Persist the to-do entity
                 em.persist(toDoToCreate);
 
-                // Commit the transaction
                 em.getTransaction().commit();
 
-                // Convert the created ToDo back to ToDoDTO for response
                 ToDoDTO createdToDoDTO = new ToDoDTO(toDoToCreate);
 
-                // Set status as CREATED and return the created to-do
                 ctx.status(HttpStatus.CREATED).json(createdToDoDTO);
             } catch (Exception e) {
                 if (em.getTransaction().isActive()) {
@@ -344,34 +350,61 @@ public class ToDoController implements IToDoController {
         return ctx -> {
             ObjectNode returnObject = objectMapper.createObjectNode();
             try {
-                // Parse the incoming JSON to a ToDoDTO
-                ToDoDTO toDoInput = ctx.bodyAsClass(ToDoDTO.class);
+                String requestBody = ctx.body();
+                System.out.println("Received update request: " + requestBody);
 
-                // Retrieve the to-do to be updated
-                int id = Integer.parseInt(ctx.pathParam("id"));
+                ToDoDTO toDoInput = objectMapper.readValue(requestBody, ToDoDTO.class);
+                int id = Integer.parseInt(ctx.pathParam("toDoId"));
                 ToDo toDoToUpdate = toDoDAO.getToDoById(id);
 
-                // Check if to-do exists
                 if (toDoToUpdate == null) {
                     ctx.status(404).json(returnObject.put("msg", "ToDo not found"));
                     return;
                 }
 
-                // Update the to-do entity with new values from ToDoDTO
                 updateToDoEntityWithDTO(toDoToUpdate, toDoInput);
-
-                // Update the to-do in the database
                 ToDo updatedToDo = toDoDAO.update(toDoToUpdate);
 
-                // Respond with the updated to-do ID
-                ctx.json(returnObject.put("updatedToDoId", updatedToDo.getToDoId()));
+                ToDoDTO updatedToDoDTO = new ToDoDTO(updatedToDo);
+                ctx.json(updatedToDoDTO);
             } catch (NumberFormatException e) {
                 ctx.status(400).json(returnObject.put("msg", "Invalid format for to-do ID"));
             } catch (Exception e) {
+                e.printStackTrace();
                 ctx.status(500).json(returnObject.put("msg", "Internal server error: " + e.getMessage()));
             }
         };
     }
+
+
+
+
+    public ToDo update(ToDo toDo) {
+        EntityManager em = emf.createEntityManager();
+        try {
+            em.getTransaction().begin();
+            ToDo updatedToDo = em.merge(toDo);
+            em.getTransaction().commit();
+            return updatedToDo;
+        } catch (Exception e) {
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().rollback();
+            }
+            throw e;
+        } finally {
+            em.close();
+        }
+    }
+
+    public ToDo getToDoById(int id) {
+        EntityManager em = emf.createEntityManager();
+        try {
+            return em.find(ToDo.class, id);
+        } finally {
+            em.close();
+        }
+    }
+
 
     private void updateToDoEntityWithDTO(ToDo toDo, ToDoDTO dto) {
         toDo.setTitle(dto.getTitle());
@@ -381,6 +414,7 @@ public class ToDoController implements IToDoController {
         toDo.setStatus(dto.getStatus());
     }
 
+
     @Override
     public Handler deleteToDo() {
         return ctx -> {
@@ -389,11 +423,17 @@ public class ToDoController implements IToDoController {
                 int id = Integer.parseInt(ctx.pathParam("id"));
                 toDoDAO.delete(id);
                 ctx.status(204);
+            } catch (NumberFormatException e) {
+                ctx.status(400).json(returnObject.put("msg", "Invalid format for to-do ID"));
             } catch (Exception e) {
-                ctx.status(500).json(returnObject.put("msg", "Internal server error"));
+                e.printStackTrace(); // Print stack trace for debugging
+                ctx.status(500).json(returnObject.put("msg", "Internal server error: " + e.getMessage()));
             }
         };
     }
+
+
+
 
     @Override
     public Handler getAllRegistrationsForToDo() {
@@ -462,4 +502,7 @@ public class ToDoController implements IToDoController {
             }
         };
     }
+
+
+
 }

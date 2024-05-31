@@ -12,14 +12,14 @@ POST http://localhost:7070/api/auth/register
 POST http://localhost:7070/api/auth/login
 
 {
- "username": "ooo",
+ "username": "lllloo",
  "password": "1234"
 }
 
 ###
 
 POST http://localhost:7070/api/user/list/create
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJUaG9tYXMgSGFydG1hbm4iLCJuYW1lIjoib29vIiwic3ViIjoib29vIiwiZXhwIjoxNzE3MDc4NDM1LCJyb2xlcyI6InVzZXIifQ.0St7POfsqtCGiQoKPvv5Rm0PtwRCXZ4Rc-wmiIaXS2M,
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJUaG9tYXMgSGFydG1hbm4iLCJuYW1lIjoib29vIiwic3ViIjoib29vIiwiZXhwIjoxNzE3MTUxNjQ0LCJyb2xlcyI6InVzZXIifQ.Y75je8vL5Wyf0AqaneKOLc_3KHaSHueMTc26iRfOGqU
 Content-Type: application/json
 
 {
@@ -94,3 +94,22 @@ GET http://localhost:7070/api/user/list/todos
 Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJUaG9tYXMgSGFydG1hbm4iLCJuYW1lIjoib29vIiwic3ViIjoib29vIiwiZXhwIjoxNzE3MTUxNjQ0LCJyb2xlcyI6InVzZXIifQ.Y75je8vL5Wyf0AqaneKOLc_3KHaSHueMTc26iRfOGqU
 
 
+###
+
+
+PUT http://localhost:7070/api/user/update/11
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJUaG9tYXMgSGFydG1hbm4iLCJuYW1lIjoib29vIiwic3ViIjoib29vIiwiZXhwIjoxNzE3MTY5MzIyLCJyb2xlcyI6InVzZXIifQ.j_Fl7CLJMYmN2FdTrM_v7K-OWdEkVyiU0cpNxNqUOkQ
+
+{
+"username": "o0o",
+"password": "1234",
+"email": "okkll@h.com",
+"phoneNumber": 5558888
+
+}
+
+
+###
+
+DELETE http://localhost:7070/api/user/delete/14
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJUaG9tYXMgSGFydG1hbm4iLCJuYW1lIjoibGxsbG9vIiwic3ViIjoibGxsbG9vIiwiZXhwIjoxNzE3MTc4Nzc2LCJyb2xlcyI6InVzZXIifQ.8xj6If9r3xiJqwQGgtko4QSzr_AZbs3itDQlmfiJr-k

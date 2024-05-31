@@ -12,7 +12,8 @@ public interface IUserController {
     Handler deleteUser();
 
     Handler logout();
-
+    Handler getUserByUsername();
+    Handler updateUserByUsername();
 
 
 

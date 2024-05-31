@@ -105,25 +105,28 @@ public class SecurityController implements ISecurityController{
                 UserDTO user = ctx.bodyAsClass(UserDTO.class);
                 System.out.println("USER IN LOGIN: " + user);
 
-
                 User verifiedUserEntity = securityDAO.verifyUser(user.getUsername(), user.getPassword());
                 for (int i = 0; i < verifiedUserEntity.getRoles().toArray().length; i++) {
                     System.out.println(Arrays.toString(verifiedUserEntity.getRoles().toArray()));
                 }
                 String token = createToken(new UserDTO(verifiedUserEntity));
-                ctx.status(200).json(new TokenDTO(token, user.getUsername()));
+                ctx.status(200).json(Map.of(
+                        "token", token,
+                        "username", user.getUsername(),
+                        "userId", verifiedUserEntity.getId() // Include the user ID in the response
+                ));
 
             } catch (EntityNotFoundException | ValidationException e) {
                 ctx.status(401);
                 System.out.println(e.getMessage());
                 ctx.json(returnObject.put("msg", e.getMessage()));
             } catch (Exception e) {
-            e.printStackTrace(); // Log the stack trace to the console
-            ctx.status(500).json(Map.of("error", "Internal server error: " + e.getMessage()));
-        }
-
-    };
+                e.printStackTrace(); // Log the stack trace to the console
+                ctx.status(500).json(Map.of("error", "Internal server error: " + e.getMessage()));
+            }
+        };
     }
+
 
 
     @Override

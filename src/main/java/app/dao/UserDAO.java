@@ -115,11 +115,16 @@ public class UserDAO implements ISecurityDAO {
         }
 
 
-        @Override
-        public User getUserById ( int id){
-            EntityManager em = emf.createEntityManager();
+    @Override
+    public User getUserById(int id) {
+        EntityManager em = emf.createEntityManager();
+        try {
             return em.find(User.class, id);
+        } finally {
+            em.close();
         }
+    }
+
 
 
     public User verifyUser(String username, String password) throws EntityNotFoundException {
@@ -251,4 +256,24 @@ public class UserDAO implements ISecurityDAO {
     }
 
 
+    public void updateUser(User user) {
+        EntityManager em = emf.createEntityManager();
+        EntityTransaction tx = em.getTransaction();
+        try {
+            tx.begin();
+            em.merge(user);
+            tx.commit();
+        } catch (Exception e) {
+            if (tx.isActive()) {
+                tx.rollback();
+            }
+            throw e;
+        } finally {
+            em.close();
+        }
+    }
+
+    public boolean checkPassword(User user, String password) {
+        return BCrypt.checkpw(password, user.getPassword());
+    }
 }

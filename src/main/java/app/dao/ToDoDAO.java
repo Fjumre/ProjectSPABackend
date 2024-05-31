@@ -3,16 +3,17 @@ package app.dao;
 
 import app.model.ToDo;
 import app.model.User;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.NoResultException;
-import jakarta.persistence.TypedQuery;
+import jakarta.persistence.*;
+import org.hibernate.SessionFactory;
 
 import java.sql.Date;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ToDoDAO {
+
+
     private static ToDoDAO instance;
     private static EntityManagerFactory emf;
 public ToDoDAO(EntityManagerFactory emf) {
@@ -148,22 +149,52 @@ public ToDoDAO(EntityManagerFactory emf) {
 
 
     public ToDo update(ToDo toDo) {
-
         EntityManager em = emf.createEntityManager();
-        em.getTransaction().begin();
-        em.merge(toDo);
-        em.getTransaction().commit();
-        return toDo;
+        try {
+            em.getTransaction().begin();
+            ToDo updatedToDo = em.merge(toDo);
+            em.getTransaction().commit();
+            return updatedToDo;
+        } catch (Exception e) {
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().rollback();
+            }
+            throw e;
+        } finally {
+            em.close();
+        }
     }
+
 
 
     public void delete(int id) {
         EntityManager em = emf.createEntityManager();
-        em.getTransaction().begin();
-        ToDo toDo = em.find(ToDo.class, id);
-        em.remove(toDo);
-        em.getTransaction().commit();
+        try {
+            em.getTransaction().begin();
+            ToDo toDo = em.find(ToDo.class, id);
+            if (toDo != null) {
+                // Remove the ToDo from associated Users
+                for (User user : toDo.getUsers()) {
+                    user.getToDos().remove(toDo);
+                    em.merge(user);
+                }
+                em.remove(toDo);
+                em.getTransaction().commit();
+            } else {
+                em.getTransaction().rollback();
+            }
+        } catch (Exception e) {
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().rollback();
+            }
+            throw e;
+        } finally {
+            em.close();
+        }
     }
+
+
+
 
     public void addToDoToUser(ToDo toDo, User userAdd) {
         EntityManager em = emf.createEntityManager();
@@ -173,7 +204,8 @@ public ToDoDAO(EntityManagerFactory emf) {
         em.getTransaction().commit();
     }
 
-    public void removeToDOFromUser(ToDo toDo, User userRemove) {
+
+    public void removeToDoFromUser(ToDo toDo, User userRemove) {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
         User user= em.find(User.class, userRemove.getId());
@@ -289,7 +321,6 @@ public ToDoDAO(EntityManagerFactory emf) {
             em.close();
         }
     }
-
 
 }
 

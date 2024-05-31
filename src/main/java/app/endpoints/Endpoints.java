@@ -47,14 +47,16 @@ public class Endpoints {
                 get("/list", toDoController.getAllToDos(), RouteRoles.USER, RouteRoles.ADMIN);
                 get("/list/{id}", toDoController.getAllToDosById() , RouteRoles.USER, RouteRoles.ADMIN);
                 get("/list/{date}", toDoController.getToDoByDate(), RouteRoles.USER, RouteRoles.ADMIN);
-                get("/user/list/todos", toDoController.getUserTodos(), RouteRoles.USER, RouteRoles.ADMIN);
-                put("/list/update/{id}", toDoController.updateToDo(), RouteRoles.USER, RouteRoles.ADMIN);
+                get("user/list/todos", toDoController.getUserTodos(), RouteRoles.USER, RouteRoles.ADMIN);
+                put("/list/update/{toDoId}", toDoController.updateToDo(), RouteRoles.USER, RouteRoles.ADMIN);
                 delete("/list/delete/{id}", toDoController.deleteToDo(), RouteRoles.USER, RouteRoles.ADMIN);
                 post("/list/create", toDoController.createToDo(), RouteRoles.USER, RouteRoles.ADMIN);
                 get("/all", userController.getAllUsers(), RouteRoles.ADMIN);
-                get("/{id}", userController.getUserById(), RouteRoles.ADMIN);
+                get("/{id}", userController.getUserById(), RouteRoles.USER, RouteRoles.ADMIN);
+                //get("/{username}", userController.getUserByUsername(), RouteRoles.USER, RouteRoles.ADMIN);
                 post("/create", userController.createUser(), RouteRoles.ADMIN);
                 put("/update/{id}", userController.updateUser(), RouteRoles.USER, RouteRoles.ADMIN);
+                //put("/update/{username}", userController.updateUser(), RouteRoles.USER, RouteRoles.ADMIN);
                 delete("/delete/{id}", userController.deleteUser(), RouteRoles.USER, RouteRoles.ADMIN);
                 post("/logout", userController.logout(), RouteRoles.USER, RouteRoles.ADMIN);
                 get("/error", ctx -> {

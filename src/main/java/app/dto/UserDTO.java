@@ -26,7 +26,7 @@ public class UserDTO {
     private Set<String> roles = new HashSet<>();
     private Set<String> toDos = new HashSet<>();
     private String newPassword;
-    private String CurrentPassword;
+    private String oldPassword;
 
     public UserDTO(String username, String password) {
         this.username = username;
@@ -76,4 +76,5 @@ public class UserDTO {
         }
         return toDoDTOList;
     }
+
 }

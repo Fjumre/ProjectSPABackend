@@ -43,12 +43,12 @@ public class ToDo {
     @Column(name= "status")
     private String Status;
 
-    @ManyToOne(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
     @JsonIgnore
     private User user;
 
-    @ManyToMany(mappedBy = "toDos", cascade = CascadeType.ALL,fetch = FetchType.EAGER)
+    @ManyToMany(mappedBy = "toDos",fetch = FetchType.EAGER)
     @JsonIgnore
     private Set<User> users = new HashSet<>();
 
